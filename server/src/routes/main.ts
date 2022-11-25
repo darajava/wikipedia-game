@@ -387,6 +387,8 @@ router.get("/article-info/:name", async (req, res) => {
       const regex5 = / ?[^.!?]+[.!?]+ */g;
       const sentences = content.match(regex5);
 
+      print(sentences[0]);
+
       if (!sentences) {
         res.status(404).json({ error: "Article not found" });
         return;
