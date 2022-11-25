@@ -24,11 +24,16 @@ function Chooser() {
 
   const submitAnswer = async (difficulty: string = "Easy") => {
     console.error(refArr.current[0]);
+
     await axios.post(`${process.env.REACT_APP_API_URL}/add-question`, {
       difficulty,
       link: gameData?.link,
-      questions: JSON.stringify(refArr.current),
-      possibleAnswers: JSON.stringify(possibleAnswerRef.current.split(/, */)),
+      questions: JSON.stringify(
+        refArr.current.filter((x) => x !== null && x !== "")
+      ),
+      possibleAnswers: JSON.stringify(
+        possibleAnswerRef.current.split(/, */).map((a) => a.trim())
+      ),
       addedBy: localStorage.getItem("addedBy"),
     });
     if (gameData) {
