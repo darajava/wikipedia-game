@@ -3,6 +3,7 @@ import { Question } from "./entity/Question";
 import express from "express";
 import cors from "cors";
 import main from "./routes/main";
+require("dotenv").config();
 
 AppDataSource.initialize()
   .then(async () => {
