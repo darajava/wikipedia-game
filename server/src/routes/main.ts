@@ -384,7 +384,7 @@ router.get("/article-info/:name", async (req, res) => {
       print(content);
 
       // get first sentence
-      const regex5 = / ?[^.!?]+[.!?]+ +/g;
+      const regex5 = / ?[^.!?]+[.!?]+ */g;
       const sentences = content.match(regex5);
 
       if (!sentences) {
