@@ -3,6 +3,8 @@ import express from "express";
 // import { isUser, MyRequest } from "../utils/jwt";
 import iconv from "iconv-lite";
 import wretch from "wretch";
+import { AppDataSource } from "../data-source";
+import { Question } from "../entity/Question";
 
 const router = express.Router();
 
@@ -165,9 +167,9 @@ function replaceAnswers(text: string, answers: string[]) {
 
     // capture match
     const regex = new RegExp(answer, "gi");
-    const regex1 = new RegExp(".?.?.?" + answer + ".?.?.?", "gi");
     const matches = text.match(regex);
-    const matches1 = text.match(regex1);
+
+    console.error(matches);
 
     // replace match with answer wrapped in bold
     if (matches) {
@@ -188,7 +190,13 @@ function replaceAnswers(text: string, answers: string[]) {
           continue;
         }
 
-        text = text.replace(matches[i], `'''${matches[i]}'''`);
+        text = text.replace(matches[i], `'''${i + "-" + i + "-" + i}'''`);
+      }
+      for (let i = 0; i < matches.length; i++) {
+        text = text.replace(
+          `'''${i + "-" + i + "-" + i}'''`,
+          `'''${matches[i]}'''`
+        );
       }
     }
 
@@ -256,6 +264,53 @@ function uniqCaseInsensitive(array: string[]) {
   });
 }
 
+// route to get random wikipedia article title
+router.get("/random", async (req, res) => {
+  try {
+    const response = await axios.get(
+      "https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json"
+    );
+
+    const title = response.data.query.random[0].title;
+
+    res.json({ title });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// function to remove text between matching html tags
+function removeBetween(text: string, tag: string) {
+  // replace <tag /> with <tag></tag>
+
+  // replace <tag> with ⦑
+  text = text.replace(new RegExp(`<${tag}[^>]*>`, "g"), "⦑");
+  // replace </tag> with ⦒
+  text = text.replace(new RegExp(`</${tag}>`, "g"), "⦒");
+
+  do {
+    const newText = text.replace(/⦑([^⦑⦒]*)⦒/g, "");
+    if (newText === text) {
+      break;
+    }
+    text = newText;
+  } while (true);
+
+  // capture text between <tag> and </tag>
+  const regex = new RegExp(`⦑([^⦑]*)⦒`, "gi");
+  const matches = text.match(regex);
+
+  if (matches) {
+    for (const match of matches) {
+      // remove <tag> and </tag>
+      text = text.replace(match, "");
+    }
+  }
+
+  return text;
+}
+
 router.get("/article-info/:name", async (req, res) => {
   // get contents of a wikipedia article
   wretch(
@@ -263,11 +318,14 @@ router.get("/article-info/:name", async (req, res) => {
     // { responseType: "arraybuffer" }
   )
     .get()
-    .json((json) => {
+    .json(async (json) => {
       const page: any = Object.values(json.query.pages)[0];
+      if (!page || !page.revisions) {
+        return res.status(404).json({ error: "Article not found" });
+      }
       const content = page.revisions[0]["*"];
 
-      const answers = getRedirects(content);
+      let answers = getRedirects(content);
 
       // remove all text between {{ }}
       const contentWithoutTemplates = removeParentheses(content);
@@ -297,11 +355,11 @@ router.get("/article-info/:name", async (req, res) => {
 
       // remove all text between ref and /ref
       const regex4 = /<ref.*?\/ref>/g;
-      const contentWithoutRefs = contentWithoutNewlines.replace(regex4, "");
+      const contentWithoutRefs = removeBetween(contentWithoutNewlines, "ref");
 
       // remove all text between math and /math
-      const regex4_1 = /<ref.*?\/ref>/g;
-      const contentWithoutMaths = contentWithoutNewlines.replace(regex4_1, "");
+      const regex4_1 = /<math.*?\/math>/g;
+      const contentWithoutMaths = removeBetween(contentWithoutRefs, "math");
 
       // remove titles
       const contentWithoutTitles = removeTitles(contentWithoutMaths);
@@ -310,9 +368,13 @@ router.get("/article-info/:name", async (req, res) => {
       const contentWithoutLinks = replaceLinks(contentWithoutTitles);
 
       // get first sentence
-      const regex5 = / ?[^.!?]+[.!?]+ ?/g;
+      const regex5 = / ?[^.!?]+[.!?]+ +/g;
       const sentences = contentWithoutLinks.match(regex5);
 
+      if (!sentences) {
+        res.status(404).json({ error: "Article not found" });
+        return;
+      }
       answers.push(...returnBold(sentences[0]));
 
       // get page title
@@ -322,22 +384,108 @@ router.get("/article-info/:name", async (req, res) => {
       }
 
       // get page link
-      const link = `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
+      const link = encodeURIComponent(title);
 
-      res.send({
-        answers: uniqCaseInsensitive(answers),
-        links: returnLinks(contentWithoutRefs).slice(0, 20),
-        questions: sentences
+      const userRepository = AppDataSource.getRepository(Question);
+
+      let difficulty, questions;
+      // find this question by link in database
+      const question = await userRepository.findOne({
+        where: { link },
+      });
+
+      // if question exists
+      if (question) {
+        difficulty = question.difficulty;
+        questions = JSON.parse(question.questions);
+        answers = JSON.parse(question.possibleAnswers);
+      } else {
+        answers = uniqCaseInsensitive(answers);
+
+        questions = sentences
           //   .map(replaceBold)
           //   .filter(filterBad)
           .map((e) => e.replace(/  /g, " "))
           .map((e) => e.replace(/ \./g, "."))
           .map((e) => replaceAnswers(e, answers))
-          .slice(0, 5),
+          .slice(0, 5);
+      }
+
+      res.send({
+        answers,
+        links: returnLinks(contentWithoutRefs).slice(0, 20),
+        questions,
         content,
         link,
+        difficulty,
+        addedBy: question?.addedBy,
       });
     });
+});
+
+// route to add a new question
+router.post("/add-question", async (req, res) => {
+  const { questions, possibleAnswers, link, difficulty, addedBy } = req.body;
+
+  const userRepository = AppDataSource.getRepository(Question);
+
+  // if link is already in database then don't add
+  const question = await userRepository
+    .createQueryBuilder("question")
+    .where("question.link = :link", { link })
+    .getOne();
+
+  if (question) {
+    question.difficulty = difficulty;
+    question.questions = questions;
+    question.possibleAnswers = possibleAnswers;
+    question.addedBy = addedBy;
+
+    await userRepository.save(question);
+
+    res.send({ error: "Question already exists" });
+
+    return;
+  }
+
+  const newQuestion = new Question();
+  newQuestion.questions = questions;
+  newQuestion.possibleAnswers = possibleAnswers;
+  newQuestion.link = link;
+  newQuestion.difficulty = difficulty;
+  newQuestion.addedBy = addedBy;
+
+  try {
+    await userRepository.save(newQuestion);
+
+    return res.send("Question added");
+  } catch (error) {
+    return res.status(500).send("Help!");
+  }
+});
+
+// route to add a new question
+router.post("/get-question", async (req, res) => {
+  const { link } = req.body;
+
+  const userRepository = AppDataSource.getRepository(Question);
+
+  // find question by link
+  try {
+    console.log(link);
+    const question = await userRepository
+      .createQueryBuilder("question")
+      .where("question.link = :link", { link })
+      .getOne();
+
+    if (question) {
+      return res.send(question);
+    } else {
+      return res.status(404).send("Question not found");
+    }
+  } catch (error) {
+    return res.status(500).send(error);
+  }
 });
 
 export default router;
