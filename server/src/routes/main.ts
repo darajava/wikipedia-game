@@ -461,7 +461,7 @@ router.post("/add-question", async (req, res) => {
 
     return res.send("Question added");
   } catch (error) {
-    return res.status(500).send("Help!");
+    return res.status(500).send(error);
   }
 });
 
