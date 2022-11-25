@@ -170,8 +170,6 @@ function replaceAnswers(text: string, answers: string[]) {
     const regex = new RegExp(answer, "gi");
     const matches = text.match(regex);
 
-    console.error(matches);
-
     // replace match with answer wrapped in bold
     if (matches) {
       for (let i = 0; i < matches.length; i++) {
@@ -284,9 +282,11 @@ router.get("/random", async (req, res) => {
 // function to remove text between matching html tags
 function removeBetween(text: string, tag: string) {
   // replace <tag /> with <tag></tag>
+  // replace self closing tags with opening and closing tags
+  text = text.replace(new RegExp(`<${tag}[^<>]*\/>`, "g"), ``);
 
   // replace <tag> with ⦑
-  text = text.replace(new RegExp(`<${tag}[^>]*>`, "g"), "⦑");
+  text = text.replace(new RegExp(`<${tag}[^>\/]*>`, "g"), "⦑");
   // replace </tag> with ⦒
   text = text.replace(new RegExp(`</${tag}>`, "g"), "⦒");
 
@@ -312,6 +312,12 @@ function removeBetween(text: string, tag: string) {
   return text;
 }
 
+// function to print first 300 characters of text
+function print(text: string) {
+  console.log("--------------------");
+  console.log(text.slice(0, 300));
+}
+
 router.get("/article-info/:name", async (req, res) => {
   // get contents of a wikipedia article
   fetch(
@@ -324,53 +330,62 @@ router.get("/article-info/:name", async (req, res) => {
       if (!page || !page.revisions) {
         return res.status(404).json({ error: "Article not found" });
       }
-      const content = page.revisions[0]["*"];
+      let content = page.revisions[0]["*"];
+
+      print(content);
 
       let answers = getRedirects(content);
 
       // remove all text between {{ }}
-      const contentWithoutTemplates = removeParentheses(content);
+      content = removeParentheses(content);
+
+      print(content);
 
       // remove all ''''' and replace with '''
-      const contentWithoutBoldItalic = contentWithoutTemplates.replace(
-        /'''''/g,
-        "'''"
-      );
+      content = content.replace(/'''''/g, "'''");
+
+      print(content);
 
       // remove all text between ( )
       const regex2 = /\(.*?\)/g;
-      const contentWithoutParentheses = contentWithoutBoldItalic.replace(
-        regex2,
-        ""
-      );
+      content = content.replace(regex2, "");
+
+      print(content);
 
       // remove all text between <!-- -->
       const regex3 = /<!--.*?-->/g;
-      const contentWithoutComments = contentWithoutParentheses.replace(
-        regex3,
-        ""
-      );
+      content = content.replace(regex3, "");
 
       // remove all newlines
-      const contentWithoutNewlines = contentWithoutComments.replace(/\n/g, "");
+      content = content.replace(/\n/g, "");
+
+      print(content);
 
       // remove all text between ref and /ref
       const regex4 = /<ref.*?\/ref>/g;
-      const contentWithoutRefs = removeBetween(contentWithoutNewlines, "ref");
+
+      content = removeBetween(content, "ref");
+
+      print(content);
 
       // remove all text between math and /math
       const regex4_1 = /<math.*?\/math>/g;
-      const contentWithoutMaths = removeBetween(contentWithoutRefs, "math");
+      content = removeBetween(content, "math");
+      print(content);
 
       // remove titles
-      const contentWithoutTitles = removeTitles(contentWithoutMaths);
+      content = removeTitles(content);
+      print(content);
+
+      const contentWithLinks = content;
 
       // remove links
-      const contentWithoutLinks = replaceLinks(contentWithoutTitles);
+      content = replaceLinks(content);
+      print(content);
 
       // get first sentence
       const regex5 = / ?[^.!?]+[.!?]+ +/g;
-      const sentences = contentWithoutLinks.match(regex5);
+      const sentences = content.match(regex5);
 
       if (!sentences) {
         res.status(404).json({ error: "Article not found" });
@@ -414,7 +429,7 @@ router.get("/article-info/:name", async (req, res) => {
 
       res.send({
         answers,
-        links: returnLinks(contentWithoutRefs).slice(0, 20),
+        links: returnLinks(contentWithLinks).slice(0, 20),
         questions,
         content,
         link,
