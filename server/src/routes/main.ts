@@ -315,7 +315,7 @@ function removeBetween(text: string, tag: string) {
 // function to print first 300 characters of text
 function print(text: string) {
   console.log("--------------------");
-  console.log(text.slice(0, 300));
+  console.log(text.slice(0, 700));
 }
 
 router.get("/article-info/:name", async (req, res) => {
