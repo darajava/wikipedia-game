@@ -18,13 +18,13 @@ function Chooser() {
   }, []);
 
   const getRandom = async () => {
-    const random = await axios.get(`${process.env.REACT_APP_API_KEY}/random`);
+    const random = await axios.get(`${process.env.REACT_APP_API_URL}/random`);
     chooseAnswer(random.data.title);
   };
 
   const submitAnswer = async (difficulty: string = "Easy") => {
     console.error(refArr.current[0]);
-    await axios.post(`${process.env.REACT_APP_API_KEY}/add-question`, {
+    await axios.post(`${process.env.REACT_APP_API_URL}/add-question`, {
       difficulty,
       link: gameData?.link,
       questions: JSON.stringify(refArr.current),
@@ -38,7 +38,7 @@ function Chooser() {
 
   const chooseAnswer = async (answer: string) => {
     const { data } = await axios.get(
-      `${process.env.REACT_APP_API_KEY}/article-info/` +
+      `${process.env.REACT_APP_API_URL}/article-info/` +
         encodeURIComponent(answer)
     );
 

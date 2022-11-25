@@ -5,6 +5,7 @@ import iconv from "iconv-lite";
 import wretch from "wretch";
 import { AppDataSource } from "../data-source";
 import { Question } from "../entity/Question";
+import fetch from "node-fetch";
 
 const router = express.Router();
 
@@ -313,12 +314,12 @@ function removeBetween(text: string, tag: string) {
 
 router.get("/article-info/:name", async (req, res) => {
   // get contents of a wikipedia article
-  wretch(
+  fetch(
     `https://en.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&titles=${req.params.name}&redirects=`
     // { responseType: "arraybuffer" }
   )
-    .get()
-    .json(async (json) => {
+    .then((response) => response.json())
+    .then(async (json) => {
       const page: any = Object.values(json.query.pages)[0];
       if (!page || !page.revisions) {
         return res.status(404).json({ error: "Article not found" });

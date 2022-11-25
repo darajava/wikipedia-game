@@ -6,7 +6,7 @@ import main from "./routes/main";
 require("dotenv").config();
 import fetch from "node-fetch";
 
-global.fetch = fetch
+global.fetch = fetch;
 
 AppDataSource.initialize()
   .then(async () => {
