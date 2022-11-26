@@ -428,6 +428,21 @@ router.get("/article-info/:name", async (req, res) => {
           .slice(0, 5);
       }
 
+      // count amount of questions that are easy
+      const easy = await userRepository.count({
+        where: { difficulty: "Easy" },
+      });
+
+      // count amount of questions that are medium
+      const medium = await userRepository.count({
+        where: { difficulty: "Medium" },
+      });
+
+      // count amount of questions that are hard
+      const hard = await userRepository.count({
+        where: { difficulty: "Hard" },
+      });
+
       res.send({
         answers,
         links: returnLinks(contentWithLinks).slice(0, 20),
@@ -436,6 +451,11 @@ router.get("/article-info/:name", async (req, res) => {
         link,
         difficulty,
         addedBy: question?.addedBy,
+        difficulties: {
+          easy,
+          medium,
+          hard,
+        },
       });
     });
 });
