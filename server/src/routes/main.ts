@@ -1,8 +1,6 @@
-import axios from "axios";
 import express from "express";
 // import { isUser, MyRequest } from "../utils/jwt";
 import iconv from "iconv-lite";
-import wretch from "wretch";
 import { AppDataSource } from "../data-source";
 import { Question } from "../entity/Question";
 import fetch from "node-fetch";
@@ -266,13 +264,14 @@ function uniqCaseInsensitive(array: string[]) {
 // route to get random wikipedia article title
 router.get("/random", async (req, res) => {
   try {
-    const response = await axios.get(
+    const response = fetch(
       "https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json"
-    );
+    ).then(r => r.json()).then(response => {
 
     const title = response.data.query.random[0].title;
 
     res.json({ title });
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
