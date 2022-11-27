@@ -264,14 +264,15 @@ function uniqCaseInsensitive(array: string[]) {
 // route to get random wikipedia article title
 router.get("/random", async (req, res) => {
   try {
-    const response = fetch(
+    fetch(
       "https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json"
-    ).then(r => r.json()).then(response => {
+    )
+      .then((r) => r.json())
+      .then((response) => {
+        const title = response.query.random[0].title;
 
-    const title = response.data.query.random[0].title;
-
-    res.json({ title });
-    });
+        res.json({ title });
+      });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });

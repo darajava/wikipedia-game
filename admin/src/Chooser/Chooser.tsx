@@ -11,6 +11,7 @@ function Chooser() {
     link: string;
     difficulty?: string;
     addedBy?: string;
+    difficulties: { [key: string]: number };
   } | null>(null);
 
   useEffect(() => {
@@ -136,19 +137,19 @@ function Chooser() {
           onClick={() => submitAnswer("Easy")}
           className={gameData.difficulty === "Easy" ? styles.highlight : ""}
         >
-          Easy
+          Easy ({gameData.difficulties.easy})
         </button>
         <button
           onClick={() => submitAnswer("Medium")}
           className={gameData.difficulty === "Medium" ? styles.highlight : ""}
         >
-          Medium
+          Medium ({gameData.difficulties.medium})
         </button>
         <button
           onClick={() => submitAnswer("Hard")}
           className={gameData.difficulty === "Hard" ? styles.highlight : ""}
         >
-          Hard
+          Hard ({gameData.difficulties.hard})
         </button>
         <button
           onClick={() => submitAnswer("Insane")}
