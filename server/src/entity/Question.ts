@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Difficulties } from "types";
 
 @Entity()
 export class Question {
@@ -18,5 +19,5 @@ export class Question {
   addedBy: string;
 
   @Column({ default: "Easy" })
-  difficulty: "Easy" | "Medium" | "Hard" | "Insane";
+  difficulty: Difficulties;
 }

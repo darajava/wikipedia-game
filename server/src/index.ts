@@ -6,6 +6,8 @@ import main from "./routes/main";
 require("dotenv").config();
 import fetch from "node-fetch";
 
+import init from "./ws/game";
+
 global.fetch = fetch;
 
 AppDataSource.initialize()
@@ -20,7 +22,10 @@ AppDataSource.initialize()
     app.use(main);
 
     app.listen(3211, () => {
-      console.log("listening!");
+      console.log("listening on 3211!");
     });
+
+    // initialize websocket server
+    init();
   })
   .catch((error) => console.log(error));

@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 import styles from "./styles.module.css";
 
@@ -13,6 +13,9 @@ function Chooser() {
     addedBy?: string;
     difficulties: { [key: string]: number };
   } | null>(null);
+
+  const links = useRef<string[]>([]);
+  const thisLink = useRef<string>("");
 
   useEffect(() => {
     getRandom();
@@ -47,6 +50,11 @@ function Chooser() {
       `${process.env.REACT_APP_API_URL}/article-info/` +
         encodeURIComponent(answer)
     );
+
+    if (thisLink.current) {
+      links.current.push(thisLink.current);
+    }
+    thisLink.current = answer;
 
     // setGameData(null);
     // setTimeout(() => {
@@ -180,6 +188,19 @@ function Chooser() {
       <br />
 
       <div className={styles.linksContainer}>
+        <span
+          className={styles.link}
+          onClick={() => {
+            console.log(links.current);
+            const last = links.current.pop();
+            if (last) {
+              chooseAnswer(last);
+            }
+          }}
+        >
+          {/* /// back arrow unicode */}
+          &#x21A9; Back
+        </span>
         {gameData.links.map((link, index) => (
           <span
             className={styles.link}
