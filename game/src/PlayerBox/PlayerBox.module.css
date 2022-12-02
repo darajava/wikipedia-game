@@ -1,0 +1,38 @@
+.playerBox {
+  border: 1px solid black;
+  box-sizing: content-box;
+  /* border-left: 0; */
+  /* margin-left: -3px; */
+  flex: 1;
+  padding: 15px 30px;
+  margin: 10px;
+}
+
+.playerBox.winning {
+  border: 3px solid black;
+}
+
+.playerBox:first-child {
+  /* border-left: 3px solid black; */
+}
+
+.me .playerName {
+  font-weight: bold;
+}
+
+.winning .playerName {
+  /* color: rgb(0, 187, 0); */
+}
+
+.playerName {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.playerScore {
+  color: black;
+  font-size: 1.4em;
+  font-weight: normal;
+  margin-left: 10px;
+}
