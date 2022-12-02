@@ -1,4 +1,56 @@
-import React, { useEffect, useRef } from "react";
+// import React, { useEffect, useRef, useState } from "react";
+
+// import {
+//   ServerMessageType,
+//   ClientMessageType,
+//   GameState,
+//   Player,
+//   Question,
+//   CreatedGameData,
+//   JoinedGameData,
+//   ServerMessageData,
+//   CreateGameData,
+//   ServerMessage,
+//   ClientMessage,
+//   JoinGameData,
+//   ClientMessageData,
+//   GuessData,
+//   YouAreData,
+//   ErrorData,
+//   NextRoundData,
+//   StartGameData,
+//   StateUpdateData,
+// } from "types";
+// import Errors from "./Errors/Errors";
+// import { Route, Router, Routes, useNavigate } from "react-router-dom";
+
+// import { w3cwebsocket as W3CWebSocket } from "websocket";
+// import Round from "./Round/Round";
+// import Intro from "./Intro/Intro";
+
+// function App() {
+//   const [me, setMe] = useState<number>(10);
+
+//   const createGame = () => {
+//     console.log("create game", me);
+//   };
+
+//   useEffect(() => {
+//     setTimeout(() => {
+//       setMe(100);
+//     }, 100);
+//   }, []);
+
+//   return (
+//     <div>
+//       <button onClick={() => createGame()}>Guess!</button>
+//     </div>
+//   );
+// }
+
+// export default App;
+
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   ServerMessageType,
@@ -22,26 +74,31 @@ import {
   StateUpdateData,
 } from "types";
 import Errors from "./Errors/Errors";
+import { Route, Router, Routes, useNavigate } from "react-router-dom";
 
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import Round from "./Round/Round";
+import Intro from "./Intro/Intro";
 
 function App() {
-  const [me, setMe] = React.useState<Player | null>(null);
-  const [gameState, setGameState] = React.useState<GameState | null>(null);
-  const [name, setName] = React.useState(localStorage.getItem("name") || "");
-  const [gameId, setGameId] = React.useState("");
-  const [guess, setGuess] = React.useState("");
+  const [me, setMe] = useState<Player | null>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [gameId, setGameId] = useState("");
+  const [dummy, setDummy] = useState<number>();
+  const [guess, setGuess] = useState("");
+  const [client, setClient] = useState<W3CWebSocket>();
+
+  let navigate = useNavigate();
 
   const sendData = (data: ClientMessage<ClientMessageData>) => {
-    if (!client.current) return;
+    if (!client) return;
 
-    client.current.send(JSON.stringify(data));
+    client.send(JSON.stringify(data));
   };
 
   const sendGuess = (guess: string) => {
-    if (!client.current) return;
-    if (client.current.readyState === client.current.OPEN) {
+    if (!client) return;
+    if (client.readyState === client.OPEN) {
       sendData({
         type: ClientMessageType.Guess,
         data: {
@@ -57,35 +114,38 @@ function App() {
   };
 
   const createGame = () => {
-    if (!client.current) return;
-    if (client.current.readyState === client.current.OPEN) {
+    console.log("create game", client, dummy);
+    if (!client) return;
+    if (client.readyState === client.OPEN) {
       sendData({
         type: ClientMessageType.CreateGame,
         data: {
           amount: 5,
-          name,
-          difficulties: ["Easy"],
+          name: localStorage.getItem("name") || "John (who?)",
+          difficulties: ["Easy", "Medium", "Hard"],
         },
       } as ClientMessage<CreateGameData>);
     }
   };
 
-  const joinGame = () => {
-    if (!client.current) return;
-    if (client.current.readyState === client.current.OPEN) {
+  const joinGame = (gameId: string) => {
+    if (!client) {
+      return;
+    }
+    if (client.readyState === client.OPEN) {
       sendData({
         type: ClientMessageType.JoinGame,
         data: {
           gameId,
-          name,
+          name: localStorage.getItem("name") || "Fred (who?)",
         },
       } as ClientMessage<JoinGameData>);
     }
   };
 
   const startGame = () => {
-    if (!client.current) return;
-    if (client.current.readyState === client.current.OPEN) {
+    if (!client) return;
+    if (client.readyState === client.OPEN) {
       sendData({
         type: ClientMessageType.StartGame,
         data: {
@@ -96,8 +156,8 @@ function App() {
   };
 
   const showNextHint = () => {
-    if (!client.current) return;
-    if (client.current.readyState === client.current.OPEN) {
+    if (!client) return;
+    if (client.readyState === client.OPEN) {
       sendData({
         type: ClientMessageType.ShowNextHint,
         data: {
@@ -108,34 +168,35 @@ function App() {
     }
   };
 
-  const client = useRef<W3CWebSocket | null>(null);
-
   const [errors, setErrors] = React.useState<string[]>([]);
 
   useEffect(() => {
-    if (name) {
-      localStorage.setItem("name", name);
-    } else {
-      localStorage.removeItem("name");
-    }
-  }, [name]);
+    setDummy(100);
+  }, []);
 
   useEffect(() => {
-    client.current = new W3CWebSocket("ws://localhost:8080/", "echo-protocol");
+    const localClient = new W3CWebSocket(
+      "ws://localhost:8080/",
+      "echo-protocol"
+    );
 
-    client.current.onerror = () => {
+    localClient.onerror = () => {
       console.log("Connection Error");
     };
 
-    client.current.onopen = () => {
+    setDummy(2);
+    localClient.onopen = () => {
+      setDummy(1);
+      setClient(localClient);
       console.log("WebSocket Client Connected");
     };
 
-    client.current.onclose = function () {
+    localClient.onclose = function () {
+      setClient(undefined);
       console.log("Client Closed");
     };
 
-    client.current.onmessage = function (e) {
+    localClient.onmessage = function (e) {
       if (typeof e.data === "string") {
         const message = JSON.parse(e.data) as ServerMessage<ServerMessageData>;
 
@@ -143,11 +204,14 @@ function App() {
           case ServerMessageType.CreatedGame:
             const createdGameData = message.data as CreatedGameData;
             console.log("Created Game", createdGameData);
+
+            navigate("/" + createdGameData.gameState.id, { replace: true });
             setGameState(createdGameData.gameState);
             break;
           case ServerMessageType.JoinedGame:
             const joinedGameData = message.data as JoinedGameData;
             console.log("Joined Game", joinedGameData);
+
             setGameState(joinedGameData.gameState);
             break;
           case ServerMessageType.YouAre:
@@ -180,25 +244,33 @@ function App() {
     };
   }, []);
 
-  return (
-    <div className="App">
-      {errors && <Errors>{errors}</Errors>}
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder={"Name..."}
-      />
-      <input
-        value={gameId}
-        onChange={(e) => setGameId(e.target.value)}
-        placeholder={"Game ID"}
-      />
+  // <input
+  //       value={name}
+  //       onChange={(e) => setName(e.target.value)}
+  //       placeholder={"Name..."}
+  //     />
+  //     <input
+  //       value={gameId}
+  //       onChange={(e) => setGameId(e.target.value)}
+  //       placeholder={"Game ID"}
+  //     />
 
-      <button onClick={createGame}>Create a game!</button>
-      <button onClick={joinGame}>Join a game!</button>
-      <button onClick={startGame}>Start!</button>
+  const [content, setContent] = useState<JSX.Element | null>(null);
 
-      {gameState && (
+  useEffect(() => {
+    if (!gameState) {
+      setContent(
+        <Routes>
+          <Route
+            path=":gameId"
+            element={
+              <Intro joinGame={joinGame} createGame={createGame} ws={client} />
+            }
+          />
+        </Routes>
+      );
+    } else {
+      setContent(
         <div>
           <h1>{gameState.id}</h1>
           <h2>Players</h2>
@@ -216,8 +288,15 @@ function App() {
             <Round gameState={gameState} showNextHint={showNextHint} />
           </ul>
         </div>
-      )}
+      );
+    }
+  }, [gameState, client]);
 
+  return (
+    <div>
+      {errors && <Errors>{errors}</Errors>}
+
+      {content}
       {gameState && gameState.currentQuestion && (
         <div>
           <input value={guess} onChange={(e) => setGuess(e.target.value)} />

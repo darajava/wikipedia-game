@@ -57,7 +57,7 @@ export type JoinGameData = {
 
 export type CreateGameData = {
   name: string;
-  difficulties: [Difficulties];
+  difficulties: Difficulties[];
   amount: number;
 };
 

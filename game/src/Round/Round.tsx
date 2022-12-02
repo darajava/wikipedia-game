@@ -23,7 +23,6 @@ const Round = (props: Props) => {
 
   return (
     <div className={styles.round}>
-      <h2>{props.gameState.currentQuestion?.possibleAnswers}</h2>
       <ul>
         {questions.map((question, i) => {
           if (i >= props.gameState.showingNumHints) return null;
