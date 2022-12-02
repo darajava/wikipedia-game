@@ -40,19 +40,28 @@ export type ClientMessageData =
   | CreateGameData
   | StartGameData
   | GuessData
-  | ShowNextHintData;
+  | ShowNextHintData
+  | RejoinGameData
+  | EndGameData;
 
 export enum ClientMessageType {
   JoinGame = "join-game",
   CreateGame = "create-game",
   StartGame = "start-game",
+  RejoinGame = "rejoin-game",
   Guess = "guess",
   ShowNextHint = "show-next-hint",
+  EndGame = "end-game",
 }
 
 export type JoinGameData = {
   gameId: string;
   name: string;
+};
+
+export type RejoinGameData = {
+  gameId: string;
+  playerId: string;
 };
 
 export type CreateGameData = {
@@ -76,6 +85,10 @@ export type ShowNextHintData = {
   gameId: string;
 };
 
+export type EndGameData = {
+  gameId: string;
+};
+
 // Server message types
 export type ServerMessage<T extends ServerMessageData> = {
   type: ServerMessageType;
@@ -90,7 +103,9 @@ export type ServerMessageData =
   | NextRoundData
   | GameOverData
   | GuessResultData
-  | StateUpdateData;
+  | StateUpdateData
+  | RejoinedGameFailedData
+  | GameOverData;
 
 export enum ServerMessageType {
   JoinedGame = "joined-game",
@@ -101,6 +116,7 @@ export enum ServerMessageType {
   GuessResult = "guess-result",
   GameOver = "game-over",
   StateUpdate = "state-update",
+  RejoinedGameFailed = "rejoined-game-failed",
 }
 
 export type JoinedGameData = {
@@ -127,7 +143,11 @@ export type NextRoundData = {
 };
 
 export type GameOverData = {
-  gameState: GameState;
+  gameId: string;
+};
+
+export type RejoinedGameFailedData = {
+  gameId: string;
 };
 
 export type StateUpdateData = {

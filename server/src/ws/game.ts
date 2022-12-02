@@ -26,6 +26,9 @@ import {
   GameOverData,
   ShowNextHintData,
   StateUpdateData,
+  RejoinGameData,
+  RejoinedGameFailedData,
+  EndGameData,
 } from "types";
 import { In } from "typeorm";
 
@@ -270,10 +273,10 @@ const init = () => {
   const joinGame = (ws: WebSocket, data: JoinGameData) => {
     const gameState = games.find((gameState) => gameState.id === data.gameId);
     if (!gameState) {
-      return sendError(ws, "Game not found");
+      return sendError(ws, "Game not found!!");
     }
 
-    const playerId = randomString(30);
+    const playerId = randomString(10);
     const player = {
       id: playerId,
       name: data.name,
@@ -321,7 +324,7 @@ const init = () => {
       broadcast(gameState, {
         type: ServerMessageType.GameOver,
         data: {
-          gameState,
+          gameId: gameState.id,
         },
       } as ServerMessage<GameOverData>);
       return;
@@ -341,7 +344,7 @@ const init = () => {
     const gameState = games.find((game) => game.id === data.gameId);
 
     if (!gameState) {
-      return sendError(ws, "Game not found");
+      return sendError(ws, "Game not found!");
     }
 
     if (gameState.currentQuestion) {
@@ -358,7 +361,7 @@ const init = () => {
 
   const createGame = async (ws: WebSocket, data: CreateGameData) => {
     console.log("create game", data);
-    const playerId = randomString(30);
+    const playerId = randomString(10);
     const player = {
       id: playerId,
       name: data.name,
@@ -430,7 +433,7 @@ const init = () => {
         // if any of the possible answers are within 2 edits of the guess, give them a point
         if (!gameState.cameClose) {
           for (const possibleAnswer of possibleAnswers) {
-            if (levenshtein(possibleAnswer, data.guess) === 1) {
+            if (levenshtein(possibleAnswer, data.guess) <= 2) {
               points = 0.2;
               gameState.cameClose = true;
               break;
@@ -488,6 +491,79 @@ const init = () => {
     } as ServerMessage<StateUpdateData>);
   };
 
+  const rejoinGame = (ws: WebSocket, data: RejoinGameData) => {
+    const gameState = games.find((game) => game.id === data.gameId);
+
+    if (!gameState) {
+      return sendMessage(ws, {
+        type: ServerMessageType.RejoinedGameFailed,
+        data: {
+          gameId: data.gameId,
+        },
+      } as ServerMessage<RejoinedGameFailedData>);
+    }
+
+    const player = gameState.players.find(
+      (player) => player.id === data.playerId
+    );
+
+    if (!player) {
+      return sendMessage(ws, {
+        type: ServerMessageType.RejoinedGameFailed,
+        data: {
+          gameId: data.gameId,
+        },
+      } as ServerMessage<RejoinedGameFailedData>);
+    }
+
+    clients.set(player.id, ws);
+
+    sendMessage(ws, {
+      type: ServerMessageType.JoinedGame,
+      data: {
+        gameState,
+        player,
+      },
+    } as ServerMessage<JoinedGameData>);
+    sendMessage(ws, {
+      type: ServerMessageType.YouAre,
+      data: {
+        player,
+        host: false,
+      },
+    } as ServerMessage<YouAreData>);
+  };
+
+  const endGame = (ws: WebSocket, data: EndGameData) => {
+    const gameState = games.find((game) => game.id === data.gameId);
+
+    if (!gameState) {
+      return sendError(ws, "Game not found");
+    }
+
+    const players = gameState.players;
+
+    broadcast(gameState, {
+      type: ServerMessageType.GameOver,
+      data: {
+        gameId: data.gameId,
+      },
+    } as ServerMessage<GameOverData>);
+
+    broadcast(gameState, {
+      type: ServerMessageType.Error,
+      data: {
+        message: "Game ended",
+      },
+    } as ServerMessage<ErrorData>);
+
+    games.splice(games.indexOf(gameState), 1);
+
+    for (const player of players) {
+      clients.delete(player.id);
+    }
+  };
+
   wss.on("connection", (ws) => {
     ws.on("message", (data) => {
       const message = JSON.parse(
@@ -509,6 +585,12 @@ const init = () => {
         }
         case ClientMessageType.ShowNextHint: {
           return showNextHint(ws, message.data as ShowNextHintData);
+        }
+        case ClientMessageType.RejoinGame: {
+          return rejoinGame(ws, message.data as RejoinGameData);
+        }
+        case ClientMessageType.EndGame: {
+          return endGame(ws, message.data as EndGameData);
         }
       }
     });

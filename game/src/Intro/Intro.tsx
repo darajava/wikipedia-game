@@ -16,70 +16,74 @@ const Intro = (props: Props) => {
 
   const [showJoinGame, setShowJoinGame] = useState(false);
 
+  const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false);
+
   let params = useParams();
   const [gameId, setGameId] = useState(params.gameId || "");
 
-  const [content, setContent] = useState<JSX.Element>();
-
   useEffect(() => {
-    if (props.ws) {
+    if (hasAttemptedJoin) {
+      return;
+    }
+    if (props.ws && props.ws.readyState === props.ws.OPEN && nameComplete) {
       console.log("params", params.gameId);
       if (params.gameId) {
         props.joinGame(params.gameId);
+        setHasAttemptedJoin(true);
       }
     }
-  }, [params.gameId, props.ws]);
+  }, [props.ws, nameComplete, hasAttemptedJoin]);
 
-  useEffect(() => {
-    if (!nameComplete) {
-      setContent(
-        <>
-          <h1>Who are you?</h1>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name..."
-          />
-          <button
-            onClick={() => {
-              localStorage.setItem("name", name);
-              setNameComplete(true);
-            }}
-          >
-            Submit
-          </button>
-        </>
-      );
-    } else if (showJoinGame) {
-      setContent(
-        <>
-          <h1>Join a game</h1>
-          <input
-            value={gameId}
-            onChange={(e) => setGameId(e.target.value)}
-            placeholder={"Game ID"}
-          />
-          <button onClick={() => setShowJoinGame(false)}>Go back</button>
-          <button onClick={() => props.joinGame(gameId)}>Join</button>
-        </>
-      );
-    } else {
-      setContent(
-        <>
-          <h1>Hi {name}! What do you want to do? </h1>
+  let content;
 
-          <button onClick={() => setNameComplete(false)}>Edit name</button>
-          <button onClick={props.createGame}>Start a new game</button>
-          <button onClick={() => setShowJoinGame(true)}>
-            Join an existing game
-          </button>
-        </>
-      );
-    }
-  }, [name, showJoinGame, gameId, nameComplete]);
+  if (!nameComplete) {
+    content = (
+      <>
+        <h1>Who are you?</h1>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name..."
+        />
+        <button
+          onClick={() => {
+            localStorage.setItem("name", name);
+            setNameComplete(true);
+          }}
+        >
+          Submit
+        </button>
+      </>
+    );
+  } else if (showJoinGame) {
+    content = (
+      <>
+        <h1>Join a game</h1>
+        <input
+          value={gameId}
+          onChange={(e) => setGameId(e.target.value)}
+          placeholder={"Game ID"}
+        />
+        <button onClick={() => setShowJoinGame(false)}>Go back</button>
+        <button onClick={() => props.joinGame(gameId)}>Join</button>
+      </>
+    );
+  } else {
+    content = (
+      <>
+        <h1>Hi {name}! What do you want to do? </h1>
 
-  return <div className="intro">{content} </div>;
+        <button onClick={() => setNameComplete(false)}>Edit name</button>
+        <button onClick={() => props.createGame()}>Start a new game</button>
+        <button onClick={() => setShowJoinGame(true)}>
+          Join an existing game
+        </button>
+      </>
+    );
+  }
+
+  return <div className="intro">{content}</div>;
 };
 
 export default Intro;
