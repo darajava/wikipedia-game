@@ -33,6 +33,7 @@
 .playerScore {
   color: black;
   font-size: 1.4em;
-  font-weight: normal;
+  font-weight: 900;
   margin-left: 10px;
+  position: relative;
 }

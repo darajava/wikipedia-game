@@ -24,6 +24,8 @@ import {
   RejoinGameData,
   RejoinedGameFailedData,
   GameOverData,
+  ScoreUpdateData,
+  ScoreReasons,
 } from "types";
 import Errors from "./Errors/Errors";
 import { Route, Router, Routes, useNavigate } from "react-router-dom";
@@ -38,6 +40,7 @@ function App() {
   const [gameState, setGameState] = useState<GameState>();
   const [guess, setGuess] = useState("");
   const [client, setClient, clientRef] = useState<W3CWebSocket>();
+  const [roundOver, setRoundOver] = useState(false);
 
   let navigate = useNavigate();
 
@@ -161,6 +164,8 @@ function App() {
 
   const [errors, setErrors] = React.useState<string[]>([]);
 
+  const [scoreUpdates, setScoreUpdates] = useState<ScoreUpdateData[]>([]);
+
   useEffect(() => {
     const client = new W3CWebSocket("ws://localhost:8080/", "echo-protocol");
 
@@ -206,12 +211,24 @@ function App() {
           case ServerMessageType.NextRound:
             const nextRoundData = message.data as NextRoundData;
             console.log("Next Round", message.data);
-            setGameState(nextRoundData.gameState);
+            setRoundOver(true);
+            setTimeout(
+              () => {
+                setRoundOver(false);
+                setGameState(nextRoundData.gameState);
+              },
+              nextRoundData.immediate ? 0 : 4000
+            );
             break;
-          case ServerMessageType.GuessResult:
-            const guessResultData = message.data as NextRoundData;
+          case ServerMessageType.ScoreUpdate:
+            const scoreUpdateData = message.data as ScoreUpdateData;
             console.log("Guess Result", message.data);
-            setGameState(guessResultData.gameState);
+            setGameState(scoreUpdateData.gameState);
+
+            setScoreUpdates((guessResults) => [
+              ...guessResults,
+              scoreUpdateData,
+            ]);
             break;
           case ServerMessageType.RejoinedGameFailed:
             const rejoinFailedData = message.data as RejoinedGameFailedData;
@@ -288,6 +305,8 @@ function App() {
             gameState={gameState}
             showNextHint={showNextHint}
             me={me}
+            scoreUpdates={scoreUpdates}
+            roundOver={roundOver}
           />
         );
       } else {
@@ -300,7 +319,7 @@ function App() {
         );
       }
     }
-  }, [gameState, client, me]);
+  }, [gameState, client, me, scoreUpdates, roundOver]);
 
   return (
     <div>

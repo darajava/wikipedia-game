@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { GameState, Player, Question } from "types";
+import { GameState, ScoreUpdateData, Player, Question } from "types";
 import { PlayerBox } from "../PlayerBox/PlayerBox";
+import { Sentence } from "../Sentence/Sentence";
 import styles from "./Round.module.css";
 
 type Props = {
@@ -8,6 +9,8 @@ type Props = {
   showNextHint: () => void;
   sendGuess: (guess: string) => void;
   me?: Player;
+  scoreUpdates?: ScoreUpdateData[];
+  roundOver: boolean;
 };
 
 const Round = (props: Props) => {
@@ -32,6 +35,7 @@ const Round = (props: Props) => {
 
   return (
     <div className={styles.round}>
+      {props.gameState.currentQuestion?.possibleAnswers}
       <div className={styles.playersContainer}>
         {props.gameState.players
           .sort((p1, p2) => {
@@ -48,20 +52,24 @@ const Round = (props: Props) => {
               player={player}
               isMe={props.me?.id === player.id}
               winning={leader.id === player.id}
+              scoreUpdates={props.scoreUpdates}
             />
           ))}
       </div>
-      <ul>
-        {questions.map((question, i) => {
-          if (i >= props.gameState.showingNumHints) return null;
 
-          return (
-            <li className={styles.fadeIn} key={question}>
-              {question}
-            </li>
-          );
-        })}
-      </ul>
+      {questions.map((question, i) => {
+        if (i >= props.gameState.showingNumHints) return null;
+
+        return (
+          <Sentence
+            key={question}
+            odd={i % 2 === 0}
+            sentence={question}
+            revealed={props.roundOver}
+          />
+        );
+      })}
+
       {props.gameState.showingNumHints < questions.length && (
         <button onClick={props.showNextHint}>Next Hint</button>
       )}

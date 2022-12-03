@@ -1,0 +1,30 @@
+.sentence {
+  padding: 20px;
+  font-size: 18px;
+  animation: fadeIn 1s ease-in-out;
+  line-height: 30px;
+  user-select: none;
+}
+
+.odd {
+  background-color: #f2f2f2;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.underline {
+  border-bottom: 2px solid black;
+  color: transparent;
+  transition: all 1s;
+}
+
+.underline.show {
+  color: black;
+}

@@ -102,7 +102,7 @@ export type ServerMessageData =
   | YouAreData
   | NextRoundData
   | GameOverData
-  | GuessResultData
+  | ScoreUpdateData
   | StateUpdateData
   | RejoinedGameFailedData
   | GameOverData;
@@ -113,7 +113,7 @@ export enum ServerMessageType {
   Error = "error",
   YouAre = "you-are",
   NextRound = "next-round",
-  GuessResult = "guess-result",
+  ScoreUpdate = "score-update",
   GameOver = "game-over",
   StateUpdate = "state-update",
   RejoinedGameFailed = "rejoined-game-failed",
@@ -140,6 +140,7 @@ export type YouAreData = {
 
 export type NextRoundData = {
   gameState: GameState;
+  immediate?: boolean;
 };
 
 export type GameOverData = {
@@ -154,9 +155,18 @@ export type StateUpdateData = {
   gameState: GameState;
 };
 
-export type GuessResultData = {
+export type ScoreUpdateData = {
   points: number;
   player: Player;
-  guess: string;
+  guess?: string;
+  reason?: ScoreReasons;
   gameState: GameState;
 };
+
+export enum ScoreReasons {
+  Correct = "correct",
+  Incorrect = "incorrect",
+  Close = "close",
+  ShowHint = "show-hint",
+  Skipped = "skipped",
+}

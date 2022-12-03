@@ -22,15 +22,18 @@ import {
   Difficulties,
   StartGameData,
   GuessData,
-  GuessResultData,
+  ScoreUpdateData,
   GameOverData,
   ShowNextHintData,
   StateUpdateData,
   RejoinGameData,
   RejoinedGameFailedData,
   EndGameData,
+  ScoreReasons,
+  NextRoundData,
 } from "types";
 import { In } from "typeorm";
+import levenshtein from "js-levenshtein";
 
 const words = [
   "a",
@@ -190,45 +193,6 @@ const randomString = (len: number) => {
   return result;
 };
 
-// levinshtein distance
-const levenshtein = (a: string, b: string) => {
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-
-  let matrix = [];
-
-  // increment along the first column of each row
-  let i;
-  for (i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-
-  // increment each column in the first row
-  let j;
-  for (j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  // Fill in the rest of the matrix
-  for (i = 1; i <= b.length; i++) {
-    for (j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) == a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          Math.min(
-            matrix[i][j - 1] + 1, // insertion
-            matrix[i - 1][j] + 1
-          )
-        ); // deletion
-      }
-    }
-  }
-
-  return matrix[b.length][a.length];
-};
-
 const init = () => {
   const games: GameState[] = [];
 
@@ -313,7 +277,10 @@ const init = () => {
     } as ServerMessage<YouAreData>);
   };
 
-  const nextRound = async (gameState: GameState) => {
+  const nextRound = async (
+    gameState: GameState,
+    immediate: boolean = false
+  ) => {
     gameState.questionsAnswered = gameState.questionsAnswered + 1;
 
     gameState.cameClose = false;
@@ -336,8 +303,9 @@ const init = () => {
       type: ServerMessageType.NextRound,
       data: {
         gameState,
+        immediate,
       },
-    } as ServerMessage<CreatedGameData>);
+    } as ServerMessage<NextRoundData>);
   };
 
   const startGame = async (ws: WebSocket, data: StartGameData) => {
@@ -355,8 +323,28 @@ const init = () => {
       return sendError(ws, "Not enough players");
     }
 
-    nextRound(gameState);
+    nextRound(gameState, true);
     return;
+  };
+
+  const updateScore = (
+    gameState: GameState,
+    player: Player,
+    score: number,
+    reason: ScoreReasons,
+    guess?: string
+  ) => {
+    player.score = player.score + score;
+    broadcast(gameState, {
+      type: ServerMessageType.ScoreUpdate,
+      data: {
+        player,
+        guess,
+        gameState,
+        reason,
+        points: score,
+      },
+    } as ServerMessage<ScoreUpdateData>);
   };
 
   const createGame = async (ws: WebSocket, data: CreateGameData) => {
@@ -423,18 +411,27 @@ const init = () => {
       const possibleAnswers = JSON.parse(
         gameState.currentQuestion.possibleAnswers.toLowerCase()
       );
+
+      let reason: ScoreReasons = ScoreReasons.Correct;
+
       let points = 0;
       if (possibleAnswers.includes(data.guess.toLowerCase())) {
         points = 1;
-        nextRound(gameState);
       } else {
         points = -0.5;
+        reason = ScoreReasons.Incorrect;
 
         // if any of the possible answers are within 2 edits of the guess, give them a point
         if (!gameState.cameClose) {
           for (const possibleAnswer of possibleAnswers) {
-            if (levenshtein(possibleAnswer, data.guess) <= 2) {
+            if (
+              levenshtein(
+                possibleAnswer.toLowerCase(),
+                data.guess.toLowerCase()
+              ) <= 2
+            ) {
               points = 0.2;
+              reason = ScoreReasons.Close;
               gameState.cameClose = true;
               break;
             }
@@ -442,19 +439,10 @@ const init = () => {
         }
       }
 
-      player.score = player.score + points;
-
-      console.log("player score", player.score);
-
-      broadcast(gameState, {
-        type: ServerMessageType.GuessResult,
-        data: {
-          player,
-          guess: data.guess,
-          gameState,
-          points,
-        },
-      } as ServerMessage<GuessResultData>);
+      updateScore(gameState, player, points, reason, data.guess);
+      if (reason === ScoreReasons.Correct) {
+        nextRound(gameState);
+      }
     } catch (e) {
       return sendError(ws, "Invalid question");
     }
@@ -479,7 +467,7 @@ const init = () => {
       return sendError(ws, "Player not found");
     }
 
-    player.score = player.score - 0.1;
+    updateScore(gameState, player, -0.1, ScoreReasons.ShowHint);
 
     gameState.showingNumHints = gameState.showingNumHints + 1;
 
