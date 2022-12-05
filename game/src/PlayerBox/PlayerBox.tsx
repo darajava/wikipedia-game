@@ -3,6 +3,8 @@ import styles from "./PlayerBox.module.css";
 import { ScoreUpdateData, Player } from "types";
 import { ScoreUpdate } from "../ScoreUpdate/ScoreUpdate";
 import { useEffect, useState } from "react";
+import CanvasDraw from "react-canvas-draw";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 type Props = {
   player: Player;
@@ -38,6 +40,18 @@ export const MAX_SCORE = 50;
 
 export const PlayerBox = (props: Props) => {
   const [hideText, setHideText] = useState(false);
+
+  const [savedCanvases, setSavedCanvases] = useLocalStorage<{
+    [key: string]: string;
+  }>("savedCanvases", {});
+
+  const [myCanvas, setMyCanvas] = useState<string>("");
+
+  useEffect(() => {
+    if (props.player.canvasDataHash) {
+      setMyCanvas(savedCanvases[props.player.canvasDataHash]);
+    }
+  }, [savedCanvases, props.player.canvasDataHash]);
 
   useEffect(() => {
     if (props.scoreUpdates && props.scoreUpdates.length > 0) {
@@ -83,6 +97,21 @@ export const PlayerBox = (props: Props) => {
         className={`${styles.playerName} ${hideText ? styles.hideText : ""}`}
       >
         <span className={styles.nameHolder}>
+          <CanvasDraw
+            loadTimeOffset={0}
+            saveData={myCanvas}
+            immediateLoading={true}
+            hideGrid={true}
+            hideInterface={true}
+            disabled={true}
+            style={
+              {
+                // zoom: 0.1,
+                // marginRight: "10px",
+              }
+            }
+            // key={index}
+          />
           {props.isMe ? "You" : props.player.name}
           {props.player.skipped ? " (skipped)" : ""}
           <span

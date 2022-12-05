@@ -29,9 +29,13 @@ export const Sentence = (props: Props) => {
 
         let show = props.revealed;
 
-        if (props.showSome) {
-          show = i % 3 === 0;
-        }
+        // if (true || props.showSome) {
+        //   show = i % 3 === 0;
+        // }
+
+        // if (props.revealed) {
+        //   show = true;
+        // }
 
         return (
           <b className={`${styles.underline} ${show ? styles.show : ""}`}>

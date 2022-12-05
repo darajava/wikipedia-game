@@ -30,6 +30,9 @@ import {
   SkipData,
   TimeUpdateData,
   PingData,
+  ServerMessageDataWithGameState,
+  AskForCanvasData,
+  CanvasDataUpdateData,
 } from "types";
 import Errors from "./Errors/Errors";
 import { Route, Router, Routes, useNavigate } from "react-router-dom";
@@ -39,14 +42,23 @@ import Round from "./Round/Round";
 import Intro from "./Intro/Intro";
 import WaitingRoom from "./WatingRoom/WaitingRoom";
 import { INTERMISSION_TIME } from "types/build/constants";
+import useLocalStorage from "./hooks/useLocalStorage";
 
 function App() {
-  const [me, setMe] = useState<string>();
   const [gameState, setGameState] = useState<GameState>();
   const [guess, setGuess] = useState("");
   const [client, setClient, clientRef] = useState<W3CWebSocket>();
   const [roundOver, setRoundOver] = useState(false);
   const [gameOver, setGameOver, gameOverRef] = useState(false);
+
+  const [name, setName] = useLocalStorage("name", "");
+  const [savedCanvases, setSavedCanvases] = useLocalStorage<{
+    [key: string]: string;
+  }>("savedCanvases", {});
+  const [canvasData, setCanvasData] = useLocalStorage<string>("canvasData", "");
+  const [playerId, setPlayerId] = useLocalStorage<string>("playerId", "");
+
+  const [test, setTest] = useLocalStorage("test", "test1");
 
   let navigate = useNavigate();
 
@@ -56,6 +68,10 @@ function App() {
     clientRef.current.send(JSON.stringify(data));
   };
 
+  useEffect(() => {
+    console.log("Name changed", name);
+  }, [name]);
+
   const sendGuess = (guess: string) => {
     if (!clientRef.current) return;
     if (clientRef.current.readyState === clientRef.current.OPEN) {
@@ -64,7 +80,7 @@ function App() {
         data: {
           guess,
           gameId: gameState?.id,
-          playerId: me,
+          playerId,
         },
       } as ClientMessage<GuessData>);
     }
@@ -81,7 +97,7 @@ function App() {
         type: ClientMessageType.Typing,
         data: {
           gameId: gameState?.id,
-          playerId: me,
+          playerId,
           typing,
         },
       } as ClientMessage<TypingData>);
@@ -103,21 +119,23 @@ function App() {
   const createGame = () => {
     console.log("create game", clientRef.current);
 
+    console.log("name", name);
     if (!clientRef.current) return;
     if (clientRef.current.readyState === clientRef.current.OPEN) {
       sendData({
         type: ClientMessageType.CreateGame,
         data: {
           amount: 5,
-          name: localStorage.getItem("name") || "John (who?)",
+          name,
           difficulties: ["Easy", "Medium", "Hard"],
+          canvasData,
         },
       } as ClientMessage<CreateGameData>);
     }
   };
 
   const rejoinFailed = (gameId: string) => {
-    localStorage.removeItem("playerId");
+    setPlayerId("");
 
     joinGame(gameId);
   };
@@ -129,12 +147,12 @@ function App() {
       return;
     }
     if (clientRef.current.readyState === clientRef.current.OPEN) {
-      if (localStorage.getItem("playerId")) {
+      if (playerId) {
         sendData({
           type: ClientMessageType.RejoinGame,
           data: {
             gameId,
-            playerId: localStorage.getItem("playerId"),
+            playerId,
           },
         } as ClientMessage<RejoinGameData>);
       } else {
@@ -142,7 +160,8 @@ function App() {
           type: ClientMessageType.JoinGame,
           data: {
             gameId,
-            name: localStorage.getItem("name") || "Fred (who?)",
+            name,
+            canvasData,
           },
         } as ClientMessage<JoinGameData>);
       }
@@ -178,11 +197,9 @@ function App() {
 
   const finishGame = () => {
     setGameState(undefined);
-    setMe(undefined);
     setGameOver(true);
     setScoreUpdates([]);
-
-    localStorage.removeItem("playerId");
+    setPlayerId("");
   };
 
   const showNextHint = () => {
@@ -192,7 +209,7 @@ function App() {
         type: ClientMessageType.ShowNextHint,
         data: {
           gameId: gameState?.id,
-          playerId: me,
+          playerId,
         },
       } as ClientMessage<GuessData>);
     }
@@ -205,7 +222,7 @@ function App() {
         type: ClientMessageType.Skip,
         data: {
           gameId: gameState?.id,
-          playerId: me,
+          playerId,
         },
       } as ClientMessage<SkipData>);
     }
@@ -218,10 +235,37 @@ function App() {
         type: ClientMessageType.Ping,
         data: {
           gameId: gameState?.id,
-          playerId: me,
+          playerId,
         },
       } as ClientMessage<PingData>);
     }
+  };
+
+  const checkCanvasData = (gs: GameState) => {
+    if (!gs) return;
+
+    // loop through plaers with a normal foreach loop
+    for (const player of gs.players) {
+      if (!savedCanvases[player.canvasDataHash]) {
+        sendData({
+          type: ClientMessageType.AskForCanvasData,
+          data: {
+            gameId: gs.id,
+          },
+        } as ClientMessage<AskForCanvasData>);
+        return;
+      }
+    }
+  };
+
+  const saveCanvasData = (canvasDatas: {
+    [canvasDataHash: string]: string;
+  }) => {
+    for (const canvasDataHash in canvasDatas) {
+      savedCanvases[canvasDataHash] = canvasDatas[canvasDataHash];
+    }
+
+    setSavedCanvases({ ...savedCanvases });
   };
 
   const [errors, setErrors] = React.useState<string[]>([]);
@@ -271,9 +315,23 @@ function App() {
       console.log("Client Closed");
     };
 
+    const hasGameState = (
+      toBeDetermined: ServerMessageData
+    ): toBeDetermined is ServerMessageDataWithGameState => {
+      if ((toBeDetermined as ServerMessageDataWithGameState).gameState) {
+        return true;
+      }
+      return false;
+    };
+
     client.onmessage = function (e) {
       if (typeof e.data === "string") {
         const message = JSON.parse(e.data) as ServerMessage<ServerMessageData>;
+
+        if (hasGameState(message.data)) {
+          setGameState(message.data.gameState);
+          checkCanvasData(message.data.gameState);
+        }
 
         switch (message.type) {
           case ServerMessageType.CreatedGame:
@@ -281,20 +339,17 @@ function App() {
             console.log("Created Game", createdGameData);
 
             navigate("/" + createdGameData.gameState.id, { replace: true });
-            setGameState(createdGameData.gameState);
 
             break;
           case ServerMessageType.JoinedGame:
             const joinedGameData = message.data as JoinedGameData;
             console.log("Joined Game", joinedGameData);
 
-            setGameState(joinedGameData.gameState);
             break;
           case ServerMessageType.YouAre:
             const youAreData = message.data as YouAreData;
             console.log("You Are", youAreData);
-            setMe(youAreData.player.id);
-            localStorage.setItem("playerId", youAreData.player.id);
+            setPlayerId(youAreData.player.id);
 
             break;
 
@@ -308,7 +363,6 @@ function App() {
             console.log("Next Round", nextRoundData.gameState);
 
             if (!gameOverRef.current) {
-              setGameState(nextRoundData.gameState);
               setRoundOver(false);
               // ping();
             }
@@ -317,7 +371,6 @@ function App() {
           case ServerMessageType.ScoreUpdate:
             const scoreUpdateData = message.data as ScoreUpdateData;
             console.log("Guess Result", message.data);
-            setGameState(scoreUpdateData.gameState);
 
             setScoreUpdates((guessResults) => [
               ...guessResults,
@@ -337,7 +390,6 @@ function App() {
                 (p) => p.name + " " + p.typing
               )
             );
-            setGameState(stateUpdateData.gameState);
             break;
 
           case ServerMessageType.GameOver:
@@ -358,6 +410,10 @@ function App() {
 
             setErrors((errors) => [...errors, errorData.message]);
             break;
+
+          case ServerMessageType.CanvasDataUpdate:
+            const canvasDataUpdateData = message.data as CanvasDataUpdateData;
+            saveCanvasData(canvasDataUpdateData.canvasDatas);
         }
       }
     };
@@ -387,6 +443,7 @@ function App() {
             element={
               <Intro
                 joinGame={joinGame}
+                canvasData={canvasData}
                 createGame={createGame}
                 ws={clientRef.current}
               />
@@ -397,6 +454,7 @@ function App() {
             element={
               <Intro
                 joinGame={joinGame}
+                canvasData={canvasData}
                 createGame={createGame}
                 ws={clientRef.current}
               />
@@ -413,30 +471,42 @@ function App() {
             showNextHint={showNextHint}
             sendTyping={sendTyping}
             skip={skip}
-            me={me}
+            me={playerId}
             scoreUpdates={scoreUpdates}
             roundOver={roundOver}
             timeLeft={timeLeft}
           />
         );
       } else {
-        const myPlayer = gameState.players.find((p) => p.id === me);
+        const myPlayer = gameState.players.find((p) => p.id === playerId);
 
         setContent(
           <WaitingRoom
-            players={gameState.players}
+            gameState={gameState}
             host={myPlayer?.isHost || false}
             startGame={() => startGame()}
           />
         );
       }
     }
-  }, [gameState, client, me, scoreUpdates, roundOver, timeLeft, gameOver]);
+  }, [
+    gameState,
+    client,
+    scoreUpdates,
+    roundOver,
+    timeLeft,
+    gameOver,
+    name,
+    canvasData,
+    savedCanvases,
+    playerId,
+  ]);
 
   return (
     <>
       {errors && <Errors>{errors}</Errors>}
       {content}
+      {test}
     </>
   );
 }

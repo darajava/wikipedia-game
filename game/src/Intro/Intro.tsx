@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { type w3cwebsocket } from "websocket";
+import { EnterName } from "../EnterName/EnterName";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 type Props = {
   joinGame: (gameId: string) => void;
   createGame: () => void;
   ws?: w3cwebsocket;
+  canvasData?: string;
 };
 
 const Intro = (props: Props) => {
-  const [name, setName] = useState(localStorage.getItem("name") || "");
+  const [name, setName] = useLocalStorage("name", "");
+
   const [nameComplete, setNameComplete] = useState(
-    localStorage.getItem("name") !== null
+    // false
+    !!name
   );
 
   const [showJoinGame, setShowJoinGame] = useState(false);
@@ -25,37 +30,24 @@ const Intro = (props: Props) => {
     if (hasAttemptedJoin) {
       return;
     }
-    if (props.ws && props.ws.readyState === props.ws.OPEN && nameComplete) {
+    if (
+      props.ws &&
+      props.ws.readyState === props.ws.OPEN &&
+      nameComplete &&
+      props.canvasData
+    ) {
       console.log("params", params.gameId);
       if (params.gameId) {
         props.joinGame(params.gameId);
         setHasAttemptedJoin(true);
       }
     }
-  }, [props.ws, nameComplete, hasAttemptedJoin]);
+  }, [props.ws, nameComplete, hasAttemptedJoin, props.canvasData]);
 
   let content;
 
   if (!nameComplete) {
-    content = (
-      <>
-        <h1>Who are you?</h1>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Name..."
-        />
-        <button
-          onClick={() => {
-            localStorage.setItem("name", name);
-            setNameComplete(true);
-          }}
-        >
-          Submit
-        </button>
-      </>
-    );
+    content = <EnterName setNameComplete={setNameComplete} />;
   } else if (showJoinGame) {
     content = (
       <>

@@ -36,15 +36,28 @@ import {
   TimeUpdateData,
   PingData,
   IntermissionData,
+  AskForCanvasData,
+  CanvasDataUpdateData,
 } from "types";
-import { In } from "typeorm";
+import { getRepository, In } from "typeorm";
 import levenshtein from "js-levenshtein";
 import {
+  HINT_TIME,
   INTERMISSION_TIME,
   POINT_GOAL,
   ROUND_TIME,
 } from "types/build/constants";
+import { Picture } from "../entity/Picture";
+import crypto from "crypto";
 
+export const SCORES = {
+  [ScoreReasons.Close]: 2,
+  [ScoreReasons.Correct]: 10,
+  [ScoreReasons.Incorrect]: -2,
+  [ScoreReasons.ShowHint]: -1,
+  [ScoreReasons.Skipped]: -1,
+  [ScoreReasons.LetTimeRunOut]: -5,
+};
 const randomString = (len) => {
   let result = "";
   const characters = "acemnorsuvwxz";
@@ -55,6 +68,7 @@ const randomString = (len) => {
 };
 
 const init = () => {
+  // TODO: Chore: Make this a map
   const games: GameState[] = [];
 
   const clients = new Map<string, WebSocket>();
@@ -102,16 +116,31 @@ const init = () => {
     });
   };
 
-  const joinGame = (ws: WebSocket, data: JoinGameData) => {
+  const joinGame = async (ws: WebSocket, data: JoinGameData) => {
+    let canvasDataHash = null;
+    try {
+      canvasDataHash = await savePicture(data.canvasData, data.name);
+    } catch (e) {
+      console.error("Error saving picture", e);
+      sendError(
+        ws,
+        "Something really weird happened, please redo your drawing..."
+      );
+
+      return;
+    }
+
     const gameState = games.find((gameState) => gameState.id === data.gameId);
     if (!gameState) {
       return sendError(ws, "Game not found!!");
     }
 
-    const playerId = randomString(10);
+    const playerId = randomString(20);
     const player = {
       id: playerId,
       name: data.name,
+      canvasDataHash,
+      skipped: false,
       score: 0,
       isHost: false,
       typing: false,
@@ -146,12 +175,37 @@ const init = () => {
     } as ServerMessage<YouAreData>);
   };
 
+  const scoreEndRound = (gameState: GameState) => {
+    const players = gameState.players;
+
+    console.log("Scoring round");
+
+    // if one or more people skipped, then the others get penalized
+    const skipped = players.filter((player) => player.skipped);
+    if (skipped.length > 0) {
+      players.forEach((player) => {
+        if (!player.skipped) {
+          console.log(
+            `Player ${player.name} skipped, penalizing ${player.name} by ${
+              SCORES[ScoreReasons.Skipped]
+            }`
+          );
+          updateScore(gameState, player, ScoreReasons.LetTimeRunOut);
+        }
+      });
+    }
+  };
+
   let roundIntervals: Map<string, NodeJS.Timeout> = new Map();
   const nextRound = async (
     gameState: GameState,
     immediate: boolean = false,
     ranOutOfTime: boolean = false
   ) => {
+    if (ranOutOfTime) {
+      scoreEndRound(gameState);
+    }
+
     gameState.players.forEach((player) => {
       player.typing = false;
       player.skipped = false;
@@ -182,7 +236,6 @@ const init = () => {
         const question = await pickQuestion(gameState.difficulties);
         gameState.currentQuestion = question;
 
-        // after ROUND_TIME, start next round
         roundIntervals.set(
           gameState.id,
           setInterval(() => {
@@ -242,14 +295,14 @@ const init = () => {
   const updateScore = (
     gameState: GameState,
     player: Player,
-    score: number,
     reason: ScoreReasons,
     guess?: string
   ) => {
-    player.score = player.score + score;
+    player.score = player.score + SCORES[reason];
     if (player.score < 0) {
       player.score = 0;
     }
+
     // if score greated than 50
     if (player.score >= POINT_GOAL) {
       // end game
@@ -267,20 +320,64 @@ const init = () => {
         guess,
         gameState,
         reason,
-        points: score,
+        points: SCORES[reason],
       },
     } as ServerMessage<ScoreUpdateData>);
   };
 
+  // function to hash a string to a string of length 32
+  const hash = (str: string) => {
+    return crypto.createHash("sha256").update(str, "utf8").digest("hex");
+  };
+
+  const savePicture = async (canvasData: string, name: string) => {
+    const canvasDataHash = hash(canvasData);
+
+    const pictureRepository = AppDataSource.getRepository(Picture);
+
+    let picture = await pictureRepository.findOne({
+      where: {
+        canvasDataHash,
+      },
+    });
+
+    if (!picture) {
+      picture = pictureRepository.create({
+        canvasDataHash,
+        canvasData,
+        name,
+      });
+
+      await pictureRepository.save(picture);
+    }
+
+    return canvasDataHash;
+  };
+
   const createGame = async (ws: WebSocket, data: CreateGameData) => {
+    let canvasDataHash = null;
+    try {
+      canvasDataHash = await savePicture(data.canvasData, data.name);
+    } catch (e) {
+      console.error("Error saving picture", e);
+      sendError(
+        ws,
+        "Something really weird happened, please redo your drawing..."
+      );
+
+      return;
+    }
+
     console.log("create game", data);
-    const playerId = randomString(10);
+    const playerId = randomString(20);
     const player = {
       id: playerId,
       name: data.name,
       score: 0,
       isHost: true,
       typing: false,
+      canvasDataHash,
+      skipped: false,
     } as Player;
 
     let id = randomString(5);
@@ -342,13 +439,11 @@ const init = () => {
         gameState.currentQuestion.possibleAnswers.toLowerCase()
       );
 
-      let reason: ScoreReasons = ScoreReasons.Correct;
+      let reason: ScoreReasons;
 
-      let points = 0;
       if (possibleAnswers.includes(data.guess.toLowerCase())) {
-        points = 10;
+        reason = ScoreReasons.Correct;
       } else {
-        points = -3;
         reason = ScoreReasons.Incorrect;
 
         // if any of the possible answers are within 2 edits of the guess, give them a point
@@ -360,7 +455,6 @@ const init = () => {
                 data.guess.toLowerCase()
               ) <= 2
             ) {
-              points = 2;
               reason = ScoreReasons.Close;
               gameState.cameClose = true;
               break;
@@ -369,7 +463,7 @@ const init = () => {
         }
       }
 
-      updateScore(gameState, player, points, reason, data.guess);
+      updateScore(gameState, player, reason, data.guess);
       if (reason === ScoreReasons.Correct) {
         nextRound(gameState);
       }
@@ -385,6 +479,12 @@ const init = () => {
       return sendError(ws, "Game not found");
     }
 
+    gameState.timeLeftInMs = gameState.timeLeftInMs + HINT_TIME;
+
+    if (gameState.timeLeftInMs > ROUND_TIME) {
+      gameState.timeLeftInMs = ROUND_TIME;
+    }
+
     if (!gameState.currentQuestion) {
       return sendError(ws, "Game not started");
     }
@@ -397,7 +497,7 @@ const init = () => {
       return sendError(ws, "Player not found");
     }
 
-    updateScore(gameState, player, -1, ScoreReasons.ShowHint);
+    updateScore(gameState, player, ScoreReasons.ShowHint);
 
     gameState.showingNumHints = gameState.showingNumHints + 1;
 
@@ -519,7 +619,7 @@ const init = () => {
     // update player typing status
     player.skipped = true;
 
-    updateScore(gameState, player, -1, ScoreReasons.Skipped);
+    updateScore(gameState, player, ScoreReasons.Skipped);
 
     // if all players have skipped, move to next round
     if (gameState.players.every((player) => player.skipped)) {
@@ -532,6 +632,39 @@ const init = () => {
         gameState,
       },
     } as ServerMessage<StateUpdateData>);
+  };
+
+  const askForCanvasData = async (ws: WebSocket, data: AskForCanvasData) => {
+    const gameState = games.find((game) => game.id === data.gameId);
+
+    if (!gameState) {
+      return sendError(ws, "Game not found");
+    }
+
+    const canvasDatas: { [canvasDataHash: string]: string } = {};
+
+    for (const player of gameState.players) {
+      if (player.canvasDataHash) {
+        const pictureRepository = AppDataSource.getRepository(Picture);
+
+        let picture = await pictureRepository.findOne({
+          where: {
+            canvasDataHash: player.canvasDataHash,
+          },
+        });
+
+        if (picture) {
+          canvasDatas[player.canvasDataHash] = picture.canvasData;
+        }
+      }
+    }
+    // send to requesting player
+    sendMessage(ws, {
+      type: ServerMessageType.CanvasDataUpdate,
+      data: {
+        canvasDatas,
+      },
+    } as ServerMessage<CanvasDataUpdateData>);
   };
 
   wss.on("connection", (ws) => {
@@ -564,6 +697,9 @@ const init = () => {
         }
         case ClientMessageType.Skip: {
           return skipQuestion(ws, message.data as SkipData);
+        }
+        case ClientMessageType.AskForCanvasData: {
+          return askForCanvasData(ws, message.data as AskForCanvasData);
         }
         case ClientMessageType.Ping: {
           return pong(ws, message.data as PingData);

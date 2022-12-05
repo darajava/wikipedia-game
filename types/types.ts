@@ -9,6 +9,7 @@ export type Player = {
   isHost: boolean;
   typing: boolean;
   skipped: boolean;
+  canvasDataHash: string;
 };
 
 export type GameState = {
@@ -49,6 +50,7 @@ export type ClientMessageData =
   | EndGameData
   | TypingData
   | SkipData
+  | AskForCanvasData
   | PingData;
 
 export enum ClientMessageType {
@@ -62,11 +64,13 @@ export enum ClientMessageType {
   Typing = "typing",
   Skip = "skip",
   Ping = "ping",
+  AskForCanvasData = "ask-for-canvas-data",
 }
 
 export type JoinGameData = {
   gameId: string;
   name: string;
+  canvasData: string;
 };
 
 export type RejoinGameData = {
@@ -76,6 +80,7 @@ export type RejoinGameData = {
 
 export type CreateGameData = {
   name: string;
+  canvasData: string;
   difficulties: Difficulties[];
 };
 
@@ -114,6 +119,10 @@ export type PingData = {
   playerId: string;
 };
 
+export type AskForCanvasData = {
+  gameId: string;
+};
+
 // Server message types
 export type ServerMessage<T extends ServerMessageData> = {
   type: ServerMessageType;
@@ -121,18 +130,22 @@ export type ServerMessage<T extends ServerMessageData> = {
 };
 
 export type ServerMessageData =
-  | JoinedGameData
-  | CreatedGameData
   | ErrorData
   | YouAreData
+  | IntermissionData
+  | RejoinedGameFailedData
+  | TimeUpdateData
+  | CanvasDataUpdateData
+  | ServerMessageDataWithGameState;
+
+export type ServerMessageDataWithGameState =
+  | JoinedGameData
+  | CreatedGameData
   | NextRoundData
   | GameOverData
   | ScoreUpdateData
   | StateUpdateData
-  | RejoinedGameFailedData
-  | GameOverData
-  | TimeUpdateData
-  | IntermissionData;
+  | GameOverData;
 
 export enum ServerMessageType {
   JoinedGame = "joined-game",
@@ -146,6 +159,7 @@ export enum ServerMessageType {
   StateUpdate = "state-update",
   RejoinedGameFailed = "rejoined-game-failed",
   TimeUpdate = "time-update",
+  CanvasDataUpdate = "canvas-data-update",
 }
 
 export type JoinedGameData = {
@@ -190,6 +204,12 @@ export type TimeUpdateData = {
   timeLeftInMs: number;
 };
 
+export type CanvasDataUpdateData = {
+  canvasDatas: {
+    [canvasDataHash: string]: string;
+  };
+};
+
 export type ScoreUpdateData = {
   points: number;
   player: Player;
@@ -204,4 +224,5 @@ export enum ScoreReasons {
   Close = "close",
   ShowHint = "show-hint",
   Skipped = "skipped",
+  LetTimeRunOut = "let-time-run-out",
 }

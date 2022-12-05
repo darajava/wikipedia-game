@@ -37,6 +37,8 @@ export const ScoreUpdate = (props: Props) => {
 
   const skippedLabels = ["Skipped", "Skipped question", "Question skipped"];
 
+  const shouldHaveSkippedLabels = ["Should have skipped"];
+
   const [label, setLabel] = useState("");
   const [guess, setGuess] = useState<string>();
   const [style, setStyle] = useState(styles.green);
@@ -61,6 +63,16 @@ export const ScoreUpdate = (props: Props) => {
         break;
       case ScoreReasons.Skipped:
         label = randomElement(skippedLabels);
+        break;
+      case ScoreReasons.LetTimeRunOut:
+        label =
+          "Should have skipped like " +
+          props.update.gameState.players
+            .filter((player) => player.skipped)
+            .map((player) => player.name)
+            .slice(0, 2)
+            .join(" and ");
+
         break;
     }
 
