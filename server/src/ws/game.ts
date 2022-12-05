@@ -31,160 +31,21 @@ import {
   EndGameData,
   ScoreReasons,
   NextRoundData,
+  TypingData,
+  SkipData,
+  TimeUpdateData,
+  PingData,
+  IntermissionData,
 } from "types";
 import { In } from "typeorm";
 import levenshtein from "js-levenshtein";
+import {
+  INTERMISSION_TIME,
+  POINT_GOAL,
+  ROUND_TIME,
+} from "types/build/constants";
 
-const words = [
-  "a",
-  "access",
-  "accuse",
-  "across",
-  "announce",
-  "answer",
-  "area",
-  "arm",
-  "as",
-  "assess",
-  "assume",
-  "assure",
-  "aware",
-  "awareness",
-  "camera",
-  "can",
-  "cancer",
-  "car",
-  "care",
-  "career",
-  "case",
-  "cause",
-  "come",
-  "common",
-  "concern",
-  "consensus",
-  "consume",
-  "consumer",
-  "core",
-  "corn",
-  "corner",
-  "course",
-  "cover",
-  "cow",
-  "cream",
-  "crew",
-  "cross",
-  "ear",
-  "earn",
-  "ease",
-  "enormous",
-  "ensure",
-  "era",
-  "error",
-  "even",
-  "ever",
-  "man",
-  "manner",
-  "mass",
-  "me",
-  "mean",
-  "measure",
-  "menu",
-  "mere",
-  "mess",
-  "mom",
-  "moon",
-  "more",
-  "moreover",
-  "mouse",
-  "move",
-  "museum",
-  "name",
-  "narrow",
-  "near",
-  "nerve",
-  "nervous",
-  "never",
-  "new",
-  "news",
-  "no",
-  "none",
-  "nor",
-  "nose",
-  "now",
-  "numerous",
-  "nurse",
-  "occur",
-  "ocean",
-  "on",
-  "once",
-  "one",
-  "or",
-  "our",
-  "oven",
-  "over",
-  "overcome",
-  "owe",
-  "own",
-  "owner",
-  "race",
-  "rare",
-  "raw",
-  "reason",
-  "recover",
-  "remove",
-  "resource",
-  "revenue",
-  "room",
-  "rose",
-  "row",
-  "run",
-  "same",
-  "sauce",
-  "save",
-  "scene",
-  "score",
-  "scream",
-  "screen",
-  "sea",
-  "season",
-  "secure",
-  "see",
-  "seem",
-  "sense",
-  "serve",
-  "seven",
-  "severe",
-  "sex",
-  "snow",
-  "so",
-  "soccer",
-  "some",
-  "someone",
-  "son",
-  "soon",
-  "source",
-  "success",
-  "sue",
-  "summer",
-  "sun",
-  "sure",
-  "swear",
-  "us",
-  "use",
-  "user",
-  "versus",
-  "vs",
-  "war",
-  "warm",
-  "warn",
-  "wave",
-  "we",
-  "wear",
-  "woman",
-  "zone",
-];
-
-const randomString = (len: number) => {
+const randomString = (len) => {
   let result = "";
   const characters = "acemnorsuvwxz";
   for (let i = 0; i < len; i++) {
@@ -228,8 +89,15 @@ const init = () => {
   };
 
   // send a message to all players in a game
-  const broadcast = (gameState: GameState, message: ServerMessage<any>) => {
+  const broadcast = (
+    gameState: GameState,
+    message: ServerMessage<any>,
+    except?: Player[]
+  ) => {
     gameState.players.forEach((player) => {
+      if (except && except.includes(player)) {
+        return;
+      }
       sendMessage(clients.get(player.id), message);
     });
   };
@@ -246,6 +114,7 @@ const init = () => {
       name: data.name,
       score: 0,
       isHost: false,
+      typing: false,
     } as Player;
 
     clients.set(playerId, ws);
@@ -277,35 +146,64 @@ const init = () => {
     } as ServerMessage<YouAreData>);
   };
 
+  let roundIntervals: Map<string, NodeJS.Timeout> = new Map();
   const nextRound = async (
     gameState: GameState,
-    immediate: boolean = false
+    immediate: boolean = false,
+    ranOutOfTime: boolean = false
   ) => {
-    gameState.questionsAnswered = gameState.questionsAnswered + 1;
+    gameState.players.forEach((player) => {
+      player.typing = false;
+      player.skipped = false;
+    });
 
-    gameState.cameClose = false;
-    gameState.showingNumHints = 1;
-
-    if (gameState.questionsAnswered > gameState.maxQuestions) {
-      gameState.currentQuestion = null;
-      broadcast(gameState, {
-        type: ServerMessageType.GameOver,
-        data: {
-          gameId: gameState.id,
-        },
-      } as ServerMessage<GameOverData>);
-      return;
-    }
-    const question = await pickQuestion(gameState.difficulties);
-    gameState.currentQuestion = question;
+    gameState.timeLeftInMs = 0;
+    gameState.isIntermission = true;
 
     broadcast(gameState, {
-      type: ServerMessageType.NextRound,
+      type: ServerMessageType.Intermission,
       data: {
         gameState,
         immediate,
       },
-    } as ServerMessage<NextRoundData>);
+    } as ServerMessage<IntermissionData>);
+
+    console.log("Will start next round in", INTERMISSION_TIME, "ms");
+    clearInterval(roundIntervals.get(gameState.id));
+    setTimeout(
+      async () => {
+        console.log("next round");
+        gameState.timeLeftInMs = ROUND_TIME;
+        gameState.showingNumHints = 1;
+        gameState.cameClose = false;
+        gameState.isIntermission = false;
+        gameState.questionsAnswered = gameState.questionsAnswered + 1;
+
+        const question = await pickQuestion(gameState.difficulties);
+        gameState.currentQuestion = question;
+
+        // after ROUND_TIME, start next round
+        roundIntervals.set(
+          gameState.id,
+          setInterval(() => {
+            gameState.timeLeftInMs -= 100;
+
+            if (gameState.timeLeftInMs <= 0) {
+              nextRound(gameState, false, true);
+            }
+          }, 100)
+        );
+
+        broadcast(gameState, {
+          type: ServerMessageType.NextRound,
+          data: {
+            gameState,
+            immediate,
+          },
+        } as ServerMessage<NextRoundData>);
+      },
+      immediate ? 0 : INTERMISSION_TIME
+    );
   };
 
   const startGame = async (ws: WebSocket, data: StartGameData) => {
@@ -327,6 +225,20 @@ const init = () => {
     return;
   };
 
+  const endGame = (gameState: GameState) => {
+    gameState.currentQuestion = null;
+
+    clearTimeout(roundIntervals.get(gameState.id));
+    roundIntervals.delete(gameState.id);
+
+    broadcast(gameState, {
+      type: ServerMessageType.GameOver,
+      data: {
+        gameState,
+      },
+    } as ServerMessage<GameOverData>);
+  };
+
   const updateScore = (
     gameState: GameState,
     player: Player,
@@ -335,6 +247,19 @@ const init = () => {
     guess?: string
   ) => {
     player.score = player.score + score;
+    if (player.score < 0) {
+      player.score = 0;
+    }
+    // if score greated than 50
+    if (player.score >= POINT_GOAL) {
+      // end game
+      endGame(gameState);
+
+      // remove gamestate
+      games.splice(games.indexOf(gameState), 1);
+
+      return;
+    }
     broadcast(gameState, {
       type: ServerMessageType.ScoreUpdate,
       data: {
@@ -355,19 +280,24 @@ const init = () => {
       name: data.name,
       score: 0,
       isHost: true,
+      typing: false,
     } as Player;
 
-    const gameState: GameState = {
-      id: `${randomString(3)}-${randomString(2)}-${randomString(3)}`,
-      // random word
+    let id = randomString(5);
+    while (games.find((game) => game.id === id)) {
+      id = randomString(5);
+    }
 
+    const gameState: GameState = {
+      id,
       players: [player],
       hostName: data.name,
       currentQuestion: null,
-      maxQuestions: data.amount,
       difficulties: data.difficulties,
       questionsAnswered: -1,
       showingNumHints: 1,
+      timeLeftInMs: undefined,
+      isIntermission: false,
     };
 
     clients.set(playerId, ws);
@@ -416,9 +346,9 @@ const init = () => {
 
       let points = 0;
       if (possibleAnswers.includes(data.guess.toLowerCase())) {
-        points = 1;
+        points = 10;
       } else {
-        points = -0.5;
+        points = -3;
         reason = ScoreReasons.Incorrect;
 
         // if any of the possible answers are within 2 edits of the guess, give them a point
@@ -430,7 +360,7 @@ const init = () => {
                 data.guess.toLowerCase()
               ) <= 2
             ) {
-              points = 0.2;
+              points = 2;
               reason = ScoreReasons.Close;
               gameState.cameClose = true;
               break;
@@ -467,7 +397,7 @@ const init = () => {
       return sendError(ws, "Player not found");
     }
 
-    updateScore(gameState, player, -0.1, ScoreReasons.ShowHint);
+    updateScore(gameState, player, -1, ScoreReasons.ShowHint);
 
     gameState.showingNumHints = gameState.showingNumHints + 1;
 
@@ -522,34 +452,86 @@ const init = () => {
     } as ServerMessage<YouAreData>);
   };
 
-  const endGame = (ws: WebSocket, data: EndGameData) => {
+  const broadcastTyping = (ws: WebSocket, typingData: TypingData) => {
+    const gameState = games.find((game) => game.id === typingData.gameId);
+
+    if (!gameState) {
+      return sendError(ws, "Game not found");
+    }
+
+    // find player in game
+    const player = gameState?.players.find(
+      (player) => player.id === typingData.playerId
+    );
+
+    // if player not found, return
+    if (!player) {
+      return;
+    }
+
+    // update player typing status
+    player.typing = typingData.typing;
+
+    broadcast(
+      gameState,
+      {
+        type: ServerMessageType.StateUpdate,
+        data: {
+          gameState,
+        },
+      } as ServerMessage<StateUpdateData>,
+      [player]
+    );
+  };
+
+  const pong = (ws: WebSocket, data: PingData) => {
     const gameState = games.find((game) => game.id === data.gameId);
 
     if (!gameState) {
       return sendError(ws, "Game not found");
     }
 
-    const players = gameState.players;
-
     broadcast(gameState, {
-      type: ServerMessageType.GameOver,
+      type: ServerMessageType.StateUpdate,
       data: {
-        gameId: data.gameId,
+        gameState,
       },
-    } as ServerMessage<GameOverData>);
+    } as ServerMessage<StateUpdateData>);
+  };
 
-    broadcast(gameState, {
-      type: ServerMessageType.Error,
-      data: {
-        message: "Game ended",
-      },
-    } as ServerMessage<ErrorData>);
+  const skipQuestion = (ws: WebSocket, skipData: SkipData) => {
+    const gameState = games.find((game) => game.id === skipData.gameId);
 
-    games.splice(games.indexOf(gameState), 1);
-
-    for (const player of players) {
-      clients.delete(player.id);
+    if (!gameState) {
+      return sendError(ws, "Game not found");
     }
+
+    // find player in game
+    const player = gameState?.players.find(
+      (player) => player.id === skipData.playerId
+    );
+
+    // if player not found, return
+    if (!player) {
+      return;
+    }
+
+    // update player typing status
+    player.skipped = true;
+
+    updateScore(gameState, player, -1, ScoreReasons.Skipped);
+
+    // if all players have skipped, move to next round
+    if (gameState.players.every((player) => player.skipped)) {
+      nextRound(gameState);
+    }
+
+    broadcast(gameState, {
+      type: ServerMessageType.StateUpdate,
+      data: {
+        gameState,
+      },
+    } as ServerMessage<StateUpdateData>);
   };
 
   wss.on("connection", (ws) => {
@@ -577,8 +559,14 @@ const init = () => {
         case ClientMessageType.RejoinGame: {
           return rejoinGame(ws, message.data as RejoinGameData);
         }
-        case ClientMessageType.EndGame: {
-          return endGame(ws, message.data as EndGameData);
+        case ClientMessageType.Typing: {
+          return broadcastTyping(ws, message.data as TypingData);
+        }
+        case ClientMessageType.Skip: {
+          return skipQuestion(ws, message.data as SkipData);
+        }
+        case ClientMessageType.Ping: {
+          return pong(ws, message.data as PingData);
         }
       }
     });

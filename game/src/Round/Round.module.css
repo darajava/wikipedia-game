@@ -1,3 +1,22 @@
+.round {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.roundContainer {
+  max-width: 800px;
+  width: 800px;
+  max-height: 800px;
+  height: 100%;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .fadeIn {
   animation: fadeIn 0.5s ease-in-out;
 }
@@ -16,6 +35,142 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 100%;
+
   width: 100%;
+}
+
+.questionContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  text-align: left;
+  width: 100%;
+  margin: 10px 0;
+  max-height: calc(100% - 70px - 55px);
+  overflow-y: scroll;
+}
+
+.questionContainer {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+.questionContainer::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.guessBar {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: stretch;
+
+  height: 60px;
+  width: 100%;
+  margin-top: auto;
+  user-select: none;
+}
+
+.guessInput,
+.guessButton {
+  font-size: 18px;
+  font-weight: bold;
+  background-color: white;
+  border: 2px solid black;
+  border-radius: 10px;
+  margin: 5px;
+  outline: none;
+  transition: all 0.5s;
+  padding: 10px;
+}
+
+.guessInput {
+  flex: 5;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-right: 0;
+}
+
+.join {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -2px;
+  /* z-index: -1; */
+}
+
+.guessButton {
+  flex: 1;
+}
+
+.guessButton:active {
+  background-color: #f1f1f1;
+  padding-top: 11px;
+  padding-bottom: 9px;
+  padding-left: 11px;
+  padding-right: 9px;
+}
+
+.guessButton:disabled,
+input:disabled {
+  border-color: rgb(158, 158, 158);
+}
+
+.title {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.left,
+.right,
+.center {
+}
+
+.left {
+  flex: 1;
+  text-align: left;
+  font-size: smaller;
+}
+
+.center {
+  text-align: center;
+  flex: 3;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.right {
+  text-align: right;
+  flex: 1;
+  /* font-weight: bold; */
+  font-size: smaller;
+}
+
+.underline {
+  border-bottom: 3px solid black;
+  color: transparent;
+  user-select: none;
+  /* border-radius: 4px; */
+}
+
+.underline.show {
+  transition: all 1s;
+  color: black;
+}
+
+.fadeOut {
+  animation: fadeOut 1s ease-in-out;
+  animation-fill-mode: forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }

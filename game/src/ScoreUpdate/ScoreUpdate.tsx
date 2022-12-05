@@ -33,12 +33,7 @@ export const ScoreUpdate = (props: Props) => {
   ];
   const closeLabels = ["Almost!", "So close!", "Nearly..."];
 
-  const hintLabels = [
-    "Used a hint",
-    "Needed a hint",
-    "Hint used",
-    "Hint needed",
-  ];
+  const hintLabels = ["Used a hint", "Took a hint", "Hint used", "Hint taken"];
 
   const skippedLabels = ["Skipped", "Skipped question", "Question skipped"];
 
@@ -69,7 +64,7 @@ export const ScoreUpdate = (props: Props) => {
         break;
     }
 
-    if (props.update.points === 1) {
+    if (props.update.points > 5) {
       setStyle(styles.green);
     } else if (props.update.points < 0) {
       setStyle(styles.red);
@@ -83,13 +78,15 @@ export const ScoreUpdate = (props: Props) => {
 
   return (
     <div className={`${styles.scoreUpdate} ${style}`}>
-      <div className={styles.left}>
-        <div className={styles.label}>{label}</div>
-        {guess && <div className={styles.guess}>"{guess}"</div>}
-      </div>
-      <div className={styles.points}>
-        {props.update.points > 0 && "+"}
-        {props.update.points}
+      <div className={styles.scoreUpdateContent}>
+        <div className={styles.left}>
+          <div className={styles.label}>{label}</div>
+          {guess && <div className={styles.guess}>"{guess}"</div>}
+        </div>
+        <div className={styles.points}>
+          {props.update.points > 0 && "+"}
+          {props.update.points}
+        </div>
       </div>
     </div>
   );

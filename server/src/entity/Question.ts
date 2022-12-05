@@ -12,10 +12,10 @@ export class Question {
   @Column("longtext")
   possibleAnswers: string;
 
-  @Column()
+  @Column("longtext")
   link: string;
 
-  @Column()
+  @Column("longtext")
   addedBy: string;
 
   @Column({ default: "Easy" })

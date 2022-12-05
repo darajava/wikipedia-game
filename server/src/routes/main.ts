@@ -362,14 +362,10 @@ router.get("/article-info/:name", async (req, res) => {
       print(content);
 
       // remove all text between ref and /ref
-      const regex4 = /<ref.*?\/ref>/g;
-
       content = removeBetween(content, "ref");
-
       print(content);
 
       // remove all text between math and /math
-      const regex4_1 = /<math.*?\/math>/g;
       content = removeBetween(content, "math");
       print(content);
 

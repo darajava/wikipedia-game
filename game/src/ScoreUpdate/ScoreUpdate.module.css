@@ -1,34 +1,44 @@
 .scoreUpdate {
   position: absolute;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
+
   height: 100%;
-  /* width: 100%; */
-  padding: 0 20px;
+  width: 100%;
+  /* padding: 0 20px; */
   font-size: 12px;
-  right: 0px;
+  top: 0;
+  right: 0;
   animation: fadeIn 2s ease-in-out;
   animation-fill-mode: forwards;
-  background-color: rgba(255, 255, 255, 0.7);
+  /* background-color: rgba(255, 255, 255, 1); */
+}
+
+.scoreUpdateContent {
+  display: flex;
+  align-items: center;
+  padding: 15px 30px;
+  justify-content: space-between;
 }
 
 .red {
-  color: red;
+  color: rgb(255, 37, 37);
 }
 
 .green {
-  color: green;
+  color: rgb(35, 179, 16);
 }
 
 .amber {
-  color: orange;
+  color: rgb(255, 166, 0);
 }
 
 .points {
   font-size: 22px;
   font-weight: bold;
+  animation: fadeUp2 2s ease-in-out;
+  transform: scale(0.5) translateY(100px) rotateZ(1deg);
+
+  animation-delay: 300ms;
+  animation-fill-mode: forwards;
 }
 
 .label {
@@ -37,11 +47,13 @@
 }
 
 .left {
-  width: 200px;
+  /* width: 200px; */
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   margin-right: 10px;
+  animation: fadeUp 2s ease-in-out;
+  animation-fill-mode: forwards;
 }
 
 .guess {
@@ -52,26 +64,66 @@
 @keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: translateX(150px) scale(0) rotateZ(1deg);
+    /* transform: translateX(150px) scale(0) rotateZ(1deg); */
     /* right: 0px; */
   }
 
-  30% {
+  20% {
     opacity: 1;
-    transform: translateX(-50px) scale(1) rotateZ(-1deg);
+    /* transform: translateX(-50px) scale(1) rotateZ(-1deg); */
 
     /* right: 100px; */
   }
   80% {
     opacity: 1;
-    transform: translateX(-50px) scale(1) rotateZ(-1deg);
+    /* transform: translateX(-50px) scale(1) rotateZ(-1deg); */
 
     /* right: 100px; */
   }
   100% {
     opacity: 0;
-    transform: translateX(-60px) scale(1) rotateZ(1deg);
+    /* transform: translateX(-60px) scale(1) rotateZ(1deg); */
 
     /* right: 100px; */
+  }
+}
+
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(100px) rotateZ(1deg);
+  }
+
+  10% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotateZ(-1deg);
+  }
+  90% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotateZ(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(0.5) translateY(-100px) rotateZ(-3deg);
+  }
+}
+
+@keyframes fadeUp2 {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(100px) rotateZ(1deg);
+  }
+
+  10% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotateZ(-1deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) translateY(0) rotateZ(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.2) translateY(0) rotateZ(5deg);
   }
 }

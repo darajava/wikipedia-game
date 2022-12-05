@@ -26,6 +26,10 @@ import {
   GameOverData,
   ScoreUpdateData,
   ScoreReasons,
+  TypingData,
+  SkipData,
+  TimeUpdateData,
+  PingData,
 } from "types";
 import Errors from "./Errors/Errors";
 import { Route, Router, Routes, useNavigate } from "react-router-dom";
@@ -34,13 +38,15 @@ import { w3cwebsocket as W3CWebSocket } from "websocket";
 import Round from "./Round/Round";
 import Intro from "./Intro/Intro";
 import WaitingRoom from "./WatingRoom/WaitingRoom";
+import { INTERMISSION_TIME } from "types/build/constants";
 
 function App() {
-  const [me, setMe] = useState<Player>();
+  const [me, setMe] = useState<string>();
   const [gameState, setGameState] = useState<GameState>();
   const [guess, setGuess] = useState("");
   const [client, setClient, clientRef] = useState<W3CWebSocket>();
   const [roundOver, setRoundOver] = useState(false);
+  const [gameOver, setGameOver, gameOverRef] = useState(false);
 
   let navigate = useNavigate();
 
@@ -58,9 +64,37 @@ function App() {
         data: {
           guess,
           gameId: gameState?.id,
-          playerId: me?.id,
+          playerId: me,
         },
       } as ClientMessage<GuessData>);
+    }
+
+    setGuess("");
+  };
+
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  const sendTyping = (typing: boolean) => {
+    if (!clientRef.current) return;
+    if (clientRef.current.readyState === clientRef.current.OPEN) {
+      sendData({
+        type: ClientMessageType.Typing,
+        data: {
+          gameId: gameState?.id,
+          playerId: me,
+          typing,
+        },
+      } as ClientMessage<TypingData>);
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      if (typing) {
+        timeoutRef.current = setTimeout(() => {
+          sendTyping(false);
+        }, 1000);
+      }
     }
 
     setGuess("");
@@ -143,8 +177,10 @@ function App() {
   };
 
   const finishGame = () => {
-    navigate("/", { replace: true });
     setGameState(undefined);
+    setMe(undefined);
+    setGameOver(true);
+    setScoreUpdates([]);
 
     localStorage.removeItem("playerId");
   };
@@ -156,15 +192,67 @@ function App() {
         type: ClientMessageType.ShowNextHint,
         data: {
           gameId: gameState?.id,
-          playerId: me?.id,
+          playerId: me,
         },
       } as ClientMessage<GuessData>);
+    }
+  };
+
+  const skip = () => {
+    if (!clientRef.current) return;
+    if (clientRef.current.readyState === clientRef.current.OPEN) {
+      sendData({
+        type: ClientMessageType.Skip,
+        data: {
+          gameId: gameState?.id,
+          playerId: me,
+        },
+      } as ClientMessage<SkipData>);
+    }
+  };
+
+  const ping = () => {
+    if (!clientRef.current) return;
+    if (clientRef.current.readyState === clientRef.current.OPEN) {
+      sendData({
+        type: ClientMessageType.Ping,
+        data: {
+          gameId: gameState?.id,
+          playerId: me,
+        },
+      } as ClientMessage<PingData>);
     }
   };
 
   const [errors, setErrors] = React.useState<string[]>([]);
 
   const [scoreUpdates, setScoreUpdates] = useState<ScoreUpdateData[]>([]);
+
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  const timeIntervalRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    setTimeLeft(gameState?.timeLeftInMs || 10);
+
+    if (timeIntervalRef.current) {
+      clearInterval(timeIntervalRef.current);
+    }
+
+    timeIntervalRef.current = setInterval(() => {
+      setTimeLeft((timeLeft) => {
+        if (timeLeft <= 0) {
+          clearInterval(timeIntervalRef.current);
+          return 0;
+        }
+        return timeLeft - 100;
+      });
+    }, 100);
+
+    if (gameState?.isIntermission) {
+      setRoundOver(true);
+    }
+  }, [gameState]);
 
   useEffect(() => {
     const client = new W3CWebSocket("ws://localhost:8080/", "echo-protocol");
@@ -194,6 +282,7 @@ function App() {
 
             navigate("/" + createdGameData.gameState.id, { replace: true });
             setGameState(createdGameData.gameState);
+
             break;
           case ServerMessageType.JoinedGame:
             const joinedGameData = message.data as JoinedGameData;
@@ -204,21 +293,26 @@ function App() {
           case ServerMessageType.YouAre:
             const youAreData = message.data as YouAreData;
             console.log("You Are", youAreData);
-            setMe(youAreData.player);
+            setMe(youAreData.player.id);
             localStorage.setItem("playerId", youAreData.player.id);
+
+            break;
+
+          case ServerMessageType.Intermission:
+            setRoundOver(true);
 
             break;
           case ServerMessageType.NextRound:
             const nextRoundData = message.data as NextRoundData;
-            console.log("Next Round", message.data);
-            setRoundOver(true);
-            setTimeout(
-              () => {
-                setRoundOver(false);
-                setGameState(nextRoundData.gameState);
-              },
-              nextRoundData.immediate ? 0 : 4000
-            );
+
+            console.log("Next Round", nextRoundData.gameState);
+
+            if (!gameOverRef.current) {
+              setGameState(nextRoundData.gameState);
+              setRoundOver(false);
+              // ping();
+            }
+
             break;
           case ServerMessageType.ScoreUpdate:
             const scoreUpdateData = message.data as ScoreUpdateData;
@@ -237,7 +331,12 @@ function App() {
             break;
           case ServerMessageType.StateUpdate:
             const stateUpdateData = message.data as StateUpdateData;
-            console.log("State Update", message.data);
+            console.log(
+              "State Update",
+              stateUpdateData.gameState.players.map(
+                (p) => p.name + " " + p.typing
+              )
+            );
             setGameState(stateUpdateData.gameState);
             break;
 
@@ -247,6 +346,12 @@ function App() {
             finishGame();
             break;
           default:
+
+          case ServerMessageType.TimeUpdate:
+            const timeUpdateData = message.data as TimeUpdateData;
+            console.log("Time Update", message.data);
+            setTimeLeft(timeUpdateData.timeLeftInMs);
+            break;
 
           case ServerMessageType.Error:
             const errorData = message.data as ErrorData;
@@ -272,7 +377,9 @@ function App() {
   const [content, setContent] = useState<JSX.Element | null>(null);
 
   useEffect(() => {
-    if (!gameState) {
+    if (gameOver) {
+      setContent(<div>Game Over!</div>);
+    } else if (!gameState) {
       setContent(
         <Routes>
           <Route
@@ -301,32 +408,36 @@ function App() {
       if (gameState.currentQuestion) {
         setContent(
           <Round
-            sendGuess={sendGuess}
             gameState={gameState}
+            sendGuess={sendGuess}
             showNextHint={showNextHint}
+            sendTyping={sendTyping}
+            skip={skip}
             me={me}
             scoreUpdates={scoreUpdates}
             roundOver={roundOver}
+            timeLeft={timeLeft}
           />
         );
       } else {
+        const myPlayer = gameState.players.find((p) => p.id === me);
+
         setContent(
           <WaitingRoom
             players={gameState.players}
-            host={me?.isHost || false}
+            host={myPlayer?.isHost || false}
             startGame={() => startGame()}
           />
         );
       }
     }
-  }, [gameState, client, me, scoreUpdates, roundOver]);
+  }, [gameState, client, me, scoreUpdates, roundOver, timeLeft, gameOver]);
 
   return (
-    <div>
+    <>
       {errors && <Errors>{errors}</Errors>}
-
       {content}
-    </div>
+    </>
   );
 }
 

@@ -7,14 +7,8 @@ type Props = {
   sentence: string;
   revealed: boolean;
   odd?: boolean;
+  showSome?: boolean;
 };
-
-// join array into new array
-function joinArray(arr: any[], joiner: any) {
-  return arr.reduce(function (a, b) {
-    return a.concat(joiner, b);
-  }, []);
-}
 
 export const Sentence = (props: Props) => {
   const cleanedUpSentence = props.sentence
@@ -24,32 +18,47 @@ export const Sentence = (props: Props) => {
 
   const boldparts = cleanedUpSentence.split(/BOLD/g);
 
-  console.log("HIHI", boldparts);
-
   const bolded = boldparts.map((part, i) => {
     if (i % 2 === 0) {
       return part;
     } else {
-      return joinArray(
-        part.split(" ").map((p) => {
-          return (
-            <b
-              className={`${styles.underline} ${
-                props.revealed ? styles.show : ""
-              }`}
-            >
-              {p}
-            </b>
-          );
-        }),
-        " "
-      );
+      return part.split("").map((p, i) => {
+        if (p === " ") {
+          return p;
+        }
+
+        let show = props.revealed;
+
+        if (props.showSome) {
+          show = i % 3 === 0;
+        }
+
+        return (
+          <b className={`${styles.underline} ${show ? styles.show : ""}`}>
+            {p}
+          </b>
+        );
+      });
+    }
+  });
+
+  const italicparts = bolded.map((part) => {
+    if (typeof part === "string") {
+      return part.split(/ITALIC/g).map((p, i) => {
+        if (i % 2 === 0) {
+          return p;
+        } else {
+          return <i>{p}</i>;
+        }
+      });
+    } else {
+      return part;
     }
   });
 
   return (
     <div className={`${styles.sentence} ${props.odd ? styles.odd : ""}`}>
-      {bolded}
+      {italicparts}
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import "./constants";
+
 export type Difficulties = "Easy" | "Medium" | "Hard" | "Insane";
 
 export type Player = {
@@ -5,7 +7,8 @@ export type Player = {
   name: string;
   score: number;
   isHost: boolean;
-  isReady: boolean;
+  typing: boolean;
+  skipped: boolean;
 };
 
 export type GameState = {
@@ -14,10 +17,11 @@ export type GameState = {
   hostName: string;
   currentQuestion?: Question;
   showingNumHints: number;
-  maxQuestions: number;
   questionsAnswered: number;
   difficulties: Difficulties[];
+  timeLeftInMs: number;
   cameClose?: boolean;
+  isIntermission: boolean;
 };
 
 export type Question = {
@@ -42,7 +46,10 @@ export type ClientMessageData =
   | GuessData
   | ShowNextHintData
   | RejoinGameData
-  | EndGameData;
+  | EndGameData
+  | TypingData
+  | SkipData
+  | PingData;
 
 export enum ClientMessageType {
   JoinGame = "join-game",
@@ -52,6 +59,9 @@ export enum ClientMessageType {
   Guess = "guess",
   ShowNextHint = "show-next-hint",
   EndGame = "end-game",
+  Typing = "typing",
+  Skip = "skip",
+  Ping = "ping",
 }
 
 export type JoinGameData = {
@@ -67,7 +77,6 @@ export type RejoinGameData = {
 export type CreateGameData = {
   name: string;
   difficulties: Difficulties[];
-  amount: number;
 };
 
 export type StartGameData = {
@@ -89,6 +98,22 @@ export type EndGameData = {
   gameId: string;
 };
 
+export type TypingData = {
+  playerId: string;
+  gameId: string;
+  typing: boolean;
+};
+
+export type SkipData = {
+  playerId: string;
+  gameId: string;
+};
+
+export type PingData = {
+  gameId: string;
+  playerId: string;
+};
+
 // Server message types
 export type ServerMessage<T extends ServerMessageData> = {
   type: ServerMessageType;
@@ -105,7 +130,9 @@ export type ServerMessageData =
   | ScoreUpdateData
   | StateUpdateData
   | RejoinedGameFailedData
-  | GameOverData;
+  | GameOverData
+  | TimeUpdateData
+  | IntermissionData;
 
 export enum ServerMessageType {
   JoinedGame = "joined-game",
@@ -113,10 +140,12 @@ export enum ServerMessageType {
   Error = "error",
   YouAre = "you-are",
   NextRound = "next-round",
+  Intermission = "intermission",
   ScoreUpdate = "score-update",
   GameOver = "game-over",
   StateUpdate = "state-update",
   RejoinedGameFailed = "rejoined-game-failed",
+  TimeUpdate = "time-update",
 }
 
 export type JoinedGameData = {
@@ -138,13 +167,15 @@ export type YouAreData = {
   host?: boolean;
 };
 
+export type IntermissionData = {};
+
 export type NextRoundData = {
   gameState: GameState;
   immediate?: boolean;
 };
 
 export type GameOverData = {
-  gameId: string;
+  gameState: GameState;
 };
 
 export type RejoinedGameFailedData = {
@@ -153,6 +184,10 @@ export type RejoinedGameFailedData = {
 
 export type StateUpdateData = {
   gameState: GameState;
+};
+
+export type TimeUpdateData = {
+  timeLeftInMs: number;
 };
 
 export type ScoreUpdateData = {

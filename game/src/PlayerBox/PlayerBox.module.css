@@ -1,15 +1,40 @@
 .playerBox {
-  border: 1px solid black;
+  border: 2px solid black;
   box-sizing: content-box;
+  border-radius: 10px;
   /* border-left: 0; */
   /* margin-left: -3px; */
   flex: 1;
   padding: 15px 30px;
-  margin: 10px;
+  margin: 5px;
+  color: black;
+  position: relative;
+  overflow: hidden;
+}
+
+.playerBox.skipped {
+  border: 2px solid rgba(0, 0, 0, 0.192);
+  color: rgba(0, 0, 0, 0.219);
+}
+
+.scoreBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #00aeff;
+  opacity: 0.2;
+  animation: fadeIn 2s ease-in-out;
+  animation-fill-mode: forwards;
+  z-index: -1;
+  transition: all 0.5s ease-in-out;
 }
 
 .playerBox.winning {
-  border: 3px solid black;
+  /* border: 2px solid black;
+  color: black;
+  background-color: rebeccapurple; */
 }
 
 .playerBox:first-child {
@@ -28,12 +53,49 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  transition: all 0.5s ease-in-out;
+}
+.hideText {
+  opacity: 0;
 }
 
 .playerScore {
-  color: black;
   font-size: 1.4em;
   font-weight: 900;
   margin-left: 10px;
-  position: relative;
+  /* position: relative; */
+}
+
+.nameHolder {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+}
+
+.typingDots {
+  overflow: hidden;
+  animation: typing 1s steps(4, end) infinite;
+  /* display: inline-block; */
+  /* font-size: large; */
+  margin-left: 3px;
+}
+
+.hidden {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes typing {
+  0% {
+    width: 0;
+  }
+  33% {
+    width: 4px;
+  }
+  66% {
+    width: 8px;
+  }
+  100% {
+    width: 16px;
+  }
 }

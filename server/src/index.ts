@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 import { AppDataSource } from "./data-source";
 import { Question } from "./entity/Question";
 import express from "express";
