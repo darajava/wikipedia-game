@@ -37,4 +37,6 @@
 
 .underline.show {
   color: black;
+  letter-spacing: 0;
+  margin-right: 0;
 }
