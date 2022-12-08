@@ -437,11 +437,24 @@ const init = () => {
     try {
       const possibleAnswers = JSON.parse(
         gameState.currentQuestion.possibleAnswers.toLowerCase()
-      );
+      ).map((pa: string) => {
+        return pa
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]/g, "");
+      });
 
       let reason: ScoreReasons;
 
-      if (possibleAnswers.includes(data.guess.toLowerCase())) {
+      const guess = data.guess
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]/gi, "");
+
+      console.log("guess", guess);
+      console.log("possible answers", possibleAnswers);
+
+      if (possibleAnswers.includes(guess)) {
         reason = ScoreReasons.Correct;
       } else {
         reason = ScoreReasons.Incorrect;
@@ -449,12 +462,7 @@ const init = () => {
         // if any of the possible answers are within 2 edits of the guess, give them a point
         if (!gameState.cameClose) {
           for (const possibleAnswer of possibleAnswers) {
-            if (
-              levenshtein(
-                possibleAnswer.toLowerCase(),
-                data.guess.toLowerCase()
-              ) <= 2
-            ) {
+            if (levenshtein(possibleAnswer.toLowerCase(), guess) <= 2) {
               reason = ScoreReasons.Close;
               gameState.cameClose = true;
               break;

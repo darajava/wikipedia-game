@@ -1,10 +1,6 @@
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect } from "react";
+
+import useState from "react-usestateref";
 
 import { useEventCallback, useEventListener } from "usehooks-ts";
 
@@ -16,7 +12,10 @@ declare global {
 
 type SetValue<T> = Dispatch<SetStateAction<T>>;
 
-function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T>] {
+function useLocalStorage<T>(
+  key: string,
+  initialValue: T
+): [T, SetValue<T>, React.MutableRefObject<T>] {
   // Get from local storage then
   // parse stored json or return initialValue
   const readValue = useCallback((): T => {
@@ -36,7 +35,7 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T>] {
 
   // State to store our value
   // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<T>(readValue);
+  const [storedValue, setStoredValue, storedValueRef] = useState<T>(readValue);
 
   // Return a wrapped version of useState's setter function that ...
   // ... persists the new value to localStorage.
@@ -87,7 +86,7 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T>] {
   // See: useLocalStorage()
   useEventListener("local-storage", handleStorageChange);
 
-  return [storedValue, setValue];
+  return [storedValue, setValue, storedValueRef];
 }
 
 export default useLocalStorage;

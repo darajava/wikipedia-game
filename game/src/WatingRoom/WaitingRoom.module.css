@@ -1,0 +1,162 @@
+.canvasContainer {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  animation: easeIn 1.5s;
+  animation-direction: reverse;
+}
+
+.name {
+}
+
+.playersHolder {
+  display: flex;
+  /* flex-direction: row; */
+  width: 100%;
+  justify-content: space-around;
+  margin: 80px 0;
+}
+
+.nameHolder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.name {
+  display: inline-block;
+  /* font-weight: bold; */
+  font-size: 40px;
+  font-family: "MAIN", sans-serif;
+  color: var(--secondary);
+  font-weight: bold;
+}
+
+.you {
+  display: inline-block;
+}
+
+.round {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.shareInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  font-size: 20px;
+  margin: 45px 0;
+  margin-top: 0;
+  outline: 0;
+  border: 1px solid var(--primary);
+  border-radius: 5px;
+  font-weight: bold;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  /* color: var(--secondary); */
+}
+
+.share {
+}
+
+.copied {
+  /* display: none; */
+  font-size: 20px;
+  font-weight: bold;
+  /* margin-top: 10px; */
+  animation: fadeIn 3s;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* background-color: #e7ffdd; */
+  background-color: var(--primary-muted);
+  border-radius: 5px;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes easeIn {
+  0% {
+    transform: scale(1);
+  }
+
+  4% {
+    transform: scale(1);
+  }
+
+  8% {
+    transform: scale(1);
+  }
+
+  14% {
+    transform: scale(1);
+  }
+
+  18% {
+    transform: scale(1);
+  }
+
+  26% {
+    transform: scale(1.01);
+  }
+
+  28% {
+    transform: scale(1.01);
+  }
+
+  40% {
+    transform: scale(0.98);
+  }
+
+  42% {
+    transform: scale(0.98);
+  }
+
+  56% {
+    transform: scale(1.05);
+  }
+
+  58% {
+    transform: scale(1.04);
+  }
+
+  72% {
+    transform: scale(0.87);
+  }
+
+  86% {
+    transform: scale(1.37);
+  }
+
+  100% {
+    transform: scale(0);
+  }
+}

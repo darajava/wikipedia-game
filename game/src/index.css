@@ -1,10 +1,12 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+    "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--primary);
+  background-color: var(--bg);
 }
 
 code {
@@ -14,4 +16,31 @@ code {
 
 #root {
   height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "MAIN", sans-serif !important;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+@font-face {
+  font-family: "MAIN";
+  src: url("../public/fonts/AmaticSC-Regular.ttf");
+  src: url("../public/fonts/AmaticSC-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "MAIN";
+  font-weight: 700;
+  src: url("../public/fonts/AmaticSC-Bold.ttf");
+  src: url("../public/fonts/AmaticSC-Bold.ttf") format("truetype");
 }

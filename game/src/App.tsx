@@ -56,9 +56,10 @@ function App() {
     [key: string]: string;
   }>("savedCanvases", {});
   const [canvasData, setCanvasData] = useLocalStorage<string>("canvasData", "");
-  const [playerId, setPlayerId] = useLocalStorage<string>("playerId", "");
-
-  const [test, setTest] = useLocalStorage("test", "test1");
+  const [playerId, setPlayerId, playerIdRef] = useLocalStorage<string>(
+    "playerId",
+    ""
+  );
 
   let navigate = useNavigate();
 
@@ -80,7 +81,7 @@ function App() {
         data: {
           guess,
           gameId: gameState?.id,
-          playerId,
+          playerId: playerIdRef.current,
         },
       } as ClientMessage<GuessData>);
     }
@@ -97,7 +98,7 @@ function App() {
         type: ClientMessageType.Typing,
         data: {
           gameId: gameState?.id,
-          playerId,
+          playerId: playerIdRef.current,
           typing,
         },
       } as ClientMessage<TypingData>);
@@ -147,12 +148,12 @@ function App() {
       return;
     }
     if (clientRef.current.readyState === clientRef.current.OPEN) {
-      if (playerId) {
+      if (playerIdRef.current) {
         sendData({
           type: ClientMessageType.RejoinGame,
           data: {
             gameId,
-            playerId,
+            playerId: playerIdRef.current,
           },
         } as ClientMessage<RejoinGameData>);
       } else {
@@ -209,7 +210,7 @@ function App() {
         type: ClientMessageType.ShowNextHint,
         data: {
           gameId: gameState?.id,
-          playerId,
+          playerId: playerIdRef.current,
         },
       } as ClientMessage<GuessData>);
     }
@@ -222,7 +223,7 @@ function App() {
         type: ClientMessageType.Skip,
         data: {
           gameId: gameState?.id,
-          playerId,
+          playerId: playerIdRef.current,
         },
       } as ClientMessage<SkipData>);
     }
@@ -235,7 +236,7 @@ function App() {
         type: ClientMessageType.Ping,
         data: {
           gameId: gameState?.id,
-          playerId,
+          playerId: playerIdRef.current,
         },
       } as ClientMessage<PingData>);
     }
@@ -312,6 +313,7 @@ function App() {
 
     client.onclose = function () {
       setClient(undefined);
+
       console.log("Client Closed");
     };
 
@@ -348,7 +350,7 @@ function App() {
             break;
           case ServerMessageType.YouAre:
             const youAreData = message.data as YouAreData;
-            console.log("You Are", youAreData);
+            console.log("You Are", youAreData.player.id);
             setPlayerId(youAreData.player.id);
 
             break;
@@ -407,6 +409,8 @@ function App() {
 
           case ServerMessageType.Error:
             const errorData = message.data as ErrorData;
+
+            navigate("/", { replace: true });
 
             setErrors((errors) => [...errors, errorData.message]);
             break;
@@ -506,7 +510,6 @@ function App() {
     <>
       {errors && <Errors>{errors}</Errors>}
       {content}
-      {test}
     </>
   );
 }

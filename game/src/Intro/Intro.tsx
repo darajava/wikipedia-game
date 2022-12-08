@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { type w3cwebsocket } from "websocket";
+import { Button } from "../Button/Button";
 import { EnterName } from "../EnterName/EnterName";
 import useLocalStorage from "../hooks/useLocalStorage";
+import { Logo } from "../Logo/Logo";
+
+import styles from "./Intro.module.css";
 
 type Props = {
   joinGame: (gameId: string) => void;
@@ -64,18 +68,23 @@ const Intro = (props: Props) => {
   } else {
     content = (
       <>
-        <h1>Hi {name}! What do you want to do? </h1>
-
-        <button onClick={() => setNameComplete(false)}>Edit name</button>
-        <button onClick={() => props.createGame()}>Start a new game</button>
-        <button onClick={() => setShowJoinGame(true)}>
-          Join an existing game
-        </button>
+        <div className={styles.buttons}>
+          <Button onClick={() => props.createGame()}>How to play</Button>
+          <Button onClick={() => props.createGame()}>Start a new game</Button>
+          <Button onClick={() => setShowJoinGame(true)}>
+            Join an existing game
+          </Button>
+        </div>
       </>
     );
   }
 
-  return <div className="intro">{content}</div>;
+  return (
+    <div className={styles.intro}>
+      <Logo />
+      {content}
+    </div>
+  );
 };
 
 export default Intro;

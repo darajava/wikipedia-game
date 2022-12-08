@@ -6,10 +6,12 @@
   /* margin-left: -3px; */
   flex: 1;
   padding: 15px 30px;
+  padding-left: 20px;
   margin: 5px;
   color: black;
   position: relative;
   overflow: hidden;
+  background-color: white;
 }
 
 .playerBox.skipped {
@@ -23,11 +25,13 @@
   left: 0;
   height: 100%;
   width: 100%;
-  background-color: #00aeff;
-  opacity: 0.2;
+  /* background-color: #00aeff; */
+  background-color: var(--primary-muted);
+
+  opacity: 0.9;
   animation: fadeIn 2s ease-in-out;
   animation-fill-mode: forwards;
-  z-index: -1;
+  /* z-index: -1; */
   transition: all 0.5s ease-in-out;
 }
 
@@ -54,6 +58,10 @@
   align-items: center;
   justify-content: space-between;
   transition: all 0.5s ease-in-out;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  z-index: 111;
 }
 .hideText {
   opacity: 0;
@@ -70,31 +78,18 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-left: 35px;
+  /* padding-left: 35px; */
 }
 
-.nameHolder div {
-  position: absolute;
-  top: 5px;
-  left: 7px;
-  background-color: transparent !important;
-}
-
-.nameHolder canvas:nth-child(2) {
-  /* border: 1px solid rgb(58, 58, 58); */
-  /* border-radius: 50%; */
-  /* transform: translate3d(0, 0, 0); */
-  zoom: 1;
-  width: 45px;
-  height: 45px;
-  overflow: hidden;
+.name {
+  margin-left: 10px;
 }
 
 .typingDots {
   overflow: hidden;
   animation: typing 1s steps(4, end) infinite;
   /* display: inline-block; */
-  /* font-size: large; */
+  font-size: large;
   margin-left: 3px;
 }
 

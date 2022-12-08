@@ -1,0 +1,13 @@
+.button {
+  flex: 1;
+  box-sizing: border-box;
+  padding: 14px;
+  font-size: 20px;
+  /* border: 2px solid var(--bg); */
+  border-radius: var(--border-radius);
+  background-color: var(--primary-muted);
+  /* color: varwhite; */
+  border: 0;
+  font-weight: bold;
+  cursor: pointer;
+}

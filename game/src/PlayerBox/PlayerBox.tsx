@@ -3,8 +3,8 @@ import styles from "./PlayerBox.module.css";
 import { ScoreUpdateData, Player } from "types";
 import { ScoreUpdate } from "../ScoreUpdate/ScoreUpdate";
 import { useEffect, useState } from "react";
-import CanvasDraw from "react-canvas-draw";
 import useLocalStorage from "../hooks/useLocalStorage";
+import ProfilePic from "../ProfilePic/ProfilePic";
 
 type Props = {
   player: Player;
@@ -81,11 +81,6 @@ export const PlayerBox = (props: Props) => {
         className={styles.scoreBar}
         style={{
           width: `${percentageDone}%`,
-          backgroundColor: interpolateColor(
-            "#00aeff",
-            "#fcff37",
-            percentageDone
-          ),
         }}
       />
       {props.scoreUpdates?.map((result, i) => {
@@ -97,23 +92,16 @@ export const PlayerBox = (props: Props) => {
         className={`${styles.playerName} ${hideText ? styles.hideText : ""}`}
       >
         <span className={styles.nameHolder}>
-          <CanvasDraw
-            loadTimeOffset={0}
+          <ProfilePic
             saveData={myCanvas}
             immediateLoading={true}
-            hideGrid={true}
-            hideInterface={true}
-            disabled={true}
-            style={
-              {
-                // zoom: 0.1,
-                // marginRight: "10px",
-              }
-            }
-            // key={index}
+            width={40}
+            fade={props.player.skipped}
           />
-          {props.isMe ? "You" : props.player.name}
-          {props.player.skipped ? " (skipped)" : ""}
+          <div className={styles.name}>
+            {props.isMe ? "You" : props.player.name}
+            {props.player.skipped ? " (skipped)" : ""}
+          </div>
           <span
             className={`${styles.typingDots} ${
               !props.isMe && props.player.typing ? "" : styles.hidden

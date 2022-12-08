@@ -105,9 +105,12 @@ const Round = (props: Props) => {
 
   return (
     <div className={`${styles.round} `}>
-      {process.env.NODE_ENV === "development" &&
-        props.gameState.currentQuestion?.possibleAnswers}
-      <div className={styles.roundContainer}>
+      <div
+        className={styles.roundContainer}
+        onClick={() => {
+          inputRef.current?.focus();
+        }}
+      >
         <div className={styles.playersContainer}>
           {props.gameState.players
             .sort((p1, p2) => {
@@ -131,10 +134,10 @@ const Round = (props: Props) => {
 
         <div
           style={{
-            background: "red",
+            background: "var(--secondary)",
             width: ((props.timeLeft - 100 || 0) / ROUND_TIME) * 100 + "%",
-
-            height: 2,
+            marginTop: "10px",
+            height: 3,
             transition: "width 100ms linear",
             opacity: props.roundOver
               ? 0
@@ -217,12 +220,13 @@ const Round = (props: Props) => {
           <button
             className={`${styles.guessButton} ${styles.join}`}
             onClick={() => {
+              if (guess.length === 0) return;
               props.sendGuess(guess);
               setGuess("");
               props.sendTyping(false);
               inputRef.current?.focus();
             }}
-            disabled={wholeBarDisabled || guess.length === 0}
+            disabled={wholeBarDisabled}
           >
             Guess!
           </button>

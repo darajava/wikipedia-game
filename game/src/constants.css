@@ -1,0 +1,9 @@
+:root {
+  --bg: #f7d8df;
+  --primary: #007cbb;
+  --secondary: #e1194a;
+  --primary-muted: #a9d5ee;
+  --primary-very-muted: #ddf3ff;
+
+  --border-radius: 10px;
+}
