@@ -395,6 +395,7 @@ const init = () => {
       showingNumHints: 1,
       timeLeftInMs: undefined,
       isIntermission: false,
+      stateOfPlay: "lobby",
     };
 
     clients.set(playerId, ws);

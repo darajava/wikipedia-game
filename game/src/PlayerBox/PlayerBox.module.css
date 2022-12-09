@@ -5,7 +5,7 @@
   /* border-left: 0; */
   /* margin-left: -3px; */
   flex: 1;
-  padding: 15px 30px;
+  padding: 10px 30px;
   padding-left: 20px;
   margin: 5px;
   color: black;
@@ -62,6 +62,8 @@
   justify-content: space-between;
   width: 100%;
   z-index: 111;
+  font-size: 30px;
+  font-family: "MAIN", sans-serif;
 }
 .hideText {
   opacity: 0;
@@ -69,8 +71,10 @@
 
 .playerScore {
   font-size: 1.4em;
-  font-weight: 900;
+  font-weight: 700;
   margin-left: 10px;
+  font-size: 24px;
+  font-family: "Open Sans", sans-serif;
   /* position: relative; */
 }
 

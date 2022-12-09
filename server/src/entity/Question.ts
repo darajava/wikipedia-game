@@ -18,4 +18,10 @@ export class Question extends Model {
 
   @Column({ default: "Easy" })
   difficulty: Difficulties;
+
+  @Column({ default: 0 })
+  amountOfTimesAsked: number;
+
+  @Column({ default: 0 })
+  amountOfTimesCorrect: number;
 }

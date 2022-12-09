@@ -7,17 +7,23 @@ import styles from "./EnterName.module.css";
 
 type Props = {
   setNameComplete: (nameComplete: boolean) => void;
+  cancel: () => void;
 };
 
-function randomHSL() {
-  return "hsla(" + ~~(360 * Math.random()) + "," + "70%," + "60%,1)";
+function randomHSL(blue: number) {
+  return "#000";
+  if (blue % 3 === 0) return "#007cbb";
+  if (blue % 3 === 1) return "#f7d8df";
+  if (blue % 3 === 2) return "#e1194a";
+  // return "hsla(" + ~~(360 * Math.random()) + "," + "70%," + "60%,1)";
 }
 
 export const EnterName = (props: Props) => {
   const [name, setName] = useLocalStorage("name", "");
   const [canvasData, setCanvasData] = useLocalStorage<string>("canvasData", "");
 
-  const [color, setColor] = useState(randomHSL());
+  const [blue, setBlue] = useState(0);
+  const [color, setColor] = useState(randomHSL(blue));
 
   const canvas = useRef<any>(null);
 
@@ -39,7 +45,8 @@ export const EnterName = (props: Props) => {
           brushRadius={12}
           onChange={() => {
             console.log("canvas changed");
-            setColor(randomHSL());
+            setBlue((b) => b + 1);
+            setColor(randomHSL(blue + 1));
           }}
         />
       </div>
@@ -131,6 +138,9 @@ export const EnterName = (props: Props) => {
           load
         </button> */}
       </div>
+      <Button secondary onClick={props.cancel}>
+        Back
+      </Button>
     </div>
   );
 };

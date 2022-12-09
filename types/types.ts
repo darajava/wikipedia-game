@@ -12,6 +12,13 @@ export type Player = {
   canvasDataHash: string;
 };
 
+type StateOfPlay =
+  | "lobby"
+  | "about-to-start"
+  | "playing"
+  | "intermission"
+  | "game-over";
+
 export type GameState = {
   id: string;
   players: Player[];
@@ -23,6 +30,7 @@ export type GameState = {
   timeLeftInMs: number;
   cameClose?: boolean;
   isIntermission: boolean;
+  stateOfPlay: StateOfPlay;
 };
 
 export type Question = {

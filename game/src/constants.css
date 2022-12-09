@@ -1,9 +1,12 @@
 :root {
-  --bg: #f7d8df;
+  --bg: #ffe3e8;
   --primary: #007cbb;
   --secondary: #e1194a;
   --primary-muted: #a9d5ee;
   --primary-very-muted: #ddf3ff;
+
+  --black: rgb(24, 24, 24);
+  --white: #fff;
 
   --border-radius: 10px;
 }

@@ -1,11 +1,13 @@
 import styles from "./ProfilePic.module.css";
 import CanvasDraw from "react-canvas-draw";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import useLocalStorage from "../hooks/useLocalStorage";
+import { Player } from "types";
 
 type Props = {
   immediateLoading: boolean;
-  saveData: string;
   width: number;
+  player: Player;
   fade?: boolean;
   rotate?: boolean;
   margin?: number;
@@ -13,6 +15,17 @@ type Props = {
 
 const ProfilePic = (props: Props) => {
   const canvasRef = useRef<CanvasDraw>(null);
+
+  const [savedCanvases, setSavedCanvases] = useLocalStorage<{
+    [key: string]: string;
+  }>("savedCanvases", {});
+  const [myCanvas, setMyCanvas] = useState<string>("");
+
+  useEffect(() => {
+    if (props.player.canvasDataHash) {
+      setMyCanvas(savedCanvases[props.player.canvasDataHash]);
+    }
+  }, [savedCanvases, props.player.canvasDataHash]);
 
   useEffect(() => {
     console.log("ProfilePic: useEffect", canvasRef.current);
@@ -36,7 +49,7 @@ const ProfilePic = (props: Props) => {
     >
       <CanvasDraw
         // loadTimeOffset={1}
-        saveData={props.saveData}
+        saveData={myCanvas}
         immediateLoading={true}
         hideGrid={true}
         hideInterface={true}

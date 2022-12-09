@@ -30,10 +30,23 @@
 .name {
   display: inline-block;
   /* font-weight: bold; */
-  font-size: 40px;
+  font-size: 44px;
   font-family: "MAIN", sans-serif;
   color: var(--secondary);
   font-weight: bold;
+  animation: rotate 6s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(-0deg) scale(1);
+  }
+  50% {
+    transform: rotate(0deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(-0deg) scale(1);
+  }
 }
 
 .you {
@@ -57,11 +70,13 @@
   margin-top: 0;
   outline: 0;
   border: 1px solid var(--primary);
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   font-weight: bold;
   text-align: center;
   position: relative;
   cursor: pointer;
+  background-color: white;
+  opacity: 0.8;
   /* color: var(--secondary); */
 }
 
@@ -85,7 +100,7 @@
   align-items: center;
   /* background-color: #e7ffdd; */
   background-color: var(--primary-muted);
-  border-radius: 5px;
+  border-radius: var(--border-radius);
 }
 
 @keyframes fadeIn {

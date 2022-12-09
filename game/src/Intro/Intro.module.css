@@ -22,3 +22,15 @@
 .buttons button {
   margin: 10px;
 }
+
+.joinGame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.joinGame button,
+.joinGame input {
+  margin: 10px;
+  width: 100%;
+}

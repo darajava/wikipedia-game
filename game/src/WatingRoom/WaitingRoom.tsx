@@ -110,11 +110,7 @@ Click here to join: ${window.location.href}`);
     <div className={styles.round}>
       <h1>Waiting room</h1>
       <div className={styles.playersHolder}>
-        {Object.entries(canvases).map((canvas, index) => {
-          const player = props.gameState.players.find(
-            (player) => player.canvasDataHash === canvas[0]
-          );
-
+        {props.gameState.players.map((player, index) => {
           // crown emoji
           const crown = "👑";
 
@@ -122,7 +118,7 @@ Click here to join: ${window.location.href}`);
             <div className={styles.canvasContainer} key={index}>
               {/* <div className={styles.crown}>{player?.isHost ? crown : ""}</div> */}
               <ProfilePic
-                saveData={canvas[1]}
+                player={player}
                 width={100}
                 margin={10}
                 immediateLoading={false}

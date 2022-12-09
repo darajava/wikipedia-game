@@ -32,7 +32,10 @@
     "ws": "^8.11.0"
   },
   "scripts": {
-    "build": "rm -r build/*; tsc && cp .env build/; pm2 start build/index.js --name wiki -f",
+    "build": "rm -r build/*; tsc && cp .env build/",
+    "pm2": "npm run build; pm2 start build/index.js --name wiki -f",
+    "migration:generate": "npm run build && typeorm migration:generate --dataSource build/data-source.js",
+    "migration:run": "npm run build && typeorm migration:run --dataSource build/data-source.js",
     "start": "ts-node src/index.ts",
     "dev": "ts-node-dev src/index.ts",
     "typeorm": "typeorm-ts-node-commonjs"

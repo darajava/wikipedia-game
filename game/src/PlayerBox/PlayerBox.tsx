@@ -41,18 +41,6 @@ export const MAX_SCORE = 50;
 export const PlayerBox = (props: Props) => {
   const [hideText, setHideText] = useState(false);
 
-  const [savedCanvases, setSavedCanvases] = useLocalStorage<{
-    [key: string]: string;
-  }>("savedCanvases", {});
-
-  const [myCanvas, setMyCanvas] = useState<string>("");
-
-  useEffect(() => {
-    if (props.player.canvasDataHash) {
-      setMyCanvas(savedCanvases[props.player.canvasDataHash]);
-    }
-  }, [savedCanvases, props.player.canvasDataHash]);
-
   useEffect(() => {
     if (props.scoreUpdates && props.scoreUpdates.length > 0) {
       // if the last element is me
@@ -93,9 +81,9 @@ export const PlayerBox = (props: Props) => {
       >
         <span className={styles.nameHolder}>
           <ProfilePic
-            saveData={myCanvas}
+            player={props.player}
             immediateLoading={true}
-            width={40}
+            width={60}
             fade={props.player.skipped}
           />
           <div className={styles.name}>

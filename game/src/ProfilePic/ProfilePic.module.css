@@ -1,3 +1,7 @@
+.profilePic {
+  /* position: relative; */
+}
+
 .profilePic div {
   /* top: 5px;
   left: 7px; */
@@ -6,7 +10,7 @@
 
 .profilePic canvas:nth-child(2) {
   /* border: 2px solid rgb(58, 58, 58); */
-  border-radius: 50%;
+  /* border-radius: 50%; */
   transform: translate3d(0, 0, 0);
   zoom: 1;
   /* width: 45px;
@@ -19,17 +23,17 @@
 }
 
 .rotate {
-  animation: rotate 3s linear infinite;
+  animation: rotate 3s ease-in-out infinite;
 }
 
 @keyframes rotate {
   0% {
-    transform: rotate(-5deg);
+    transform: rotate(-6deg);
   }
   50% {
-    transform: rotate(5deg);
+    transform: rotate(6deg);
   }
   100% {
-    transform: rotate(-5deg);
+    transform: rotate(-6deg);
   }
 }

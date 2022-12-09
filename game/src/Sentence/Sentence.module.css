@@ -8,13 +8,13 @@
   border-radius: 10px;
   /* border: 1px solid rgb(196, 196, 196); */
   margin-bottom: 15px;
-  background-color: #f4f9ff;
+  background-color: #fefeff;
   color: black;
   border: 2px solid black;
 }
 
 .odd {
-  background-color: #fefeff;
+  /* background-color: #fefeff; */
 }
 
 @keyframes fadeIn {

@@ -6,7 +6,7 @@
 
 .canvasContainer {
   border: 2px solid var(--primary);
-  border-radius: 50%;
+  border-radius: var(--border-radius);
   box-sizing: border-box;
   overflow: hidden;
   width: 400px;

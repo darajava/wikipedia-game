@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { type w3cwebsocket } from "websocket";
 import { Button } from "../Button/Button";
 import { EnterName } from "../EnterName/EnterName";
 import useLocalStorage from "../hooks/useLocalStorage";
+import { Input } from "../Input/Input";
 import { Logo } from "../Logo/Logo";
 
 import styles from "./Intro.module.css";
@@ -12,11 +13,10 @@ type Props = {
   joinGame: (gameId: string) => void;
   createGame: () => void;
   ws?: w3cwebsocket;
-  canvasData?: string;
 };
 
 const Intro = (props: Props) => {
-  const [name, setName] = useLocalStorage("name", "");
+  const [name] = useLocalStorage("name", "");
 
   const [nameComplete, setNameComplete] = useState(
     // false
@@ -29,62 +29,102 @@ const Intro = (props: Props) => {
 
   let params = useParams();
   const [gameId, setGameId] = useState(params.gameId || "");
+  let navigate = useNavigate();
 
   useEffect(() => {
     if (hasAttemptedJoin) {
       return;
     }
-    if (
-      props.ws &&
-      props.ws.readyState === props.ws.OPEN &&
-      nameComplete &&
-      props.canvasData
-    ) {
-      console.log("params", params.gameId);
-      if (params.gameId) {
+
+    if (props.ws && props.ws.readyState === props.ws.OPEN && params.gameId) {
+      if (nameComplete) {
         props.joinGame(params.gameId);
         setHasAttemptedJoin(true);
+      } else {
+        setContent(
+          <EnterName
+            setNameComplete={() => {
+              setNameComplete(true);
+            }}
+            cancel={() => {
+              navigate("/");
+              setGameId("");
+            }}
+          />
+        );
       }
+      console.log("params", params.gameId);
     }
-  }, [props.ws, nameComplete, hasAttemptedJoin, props.canvasData]);
+  }, [props.ws, nameComplete, hasAttemptedJoin]);
 
-  let content;
+  const [content, setContent] = useState<JSX.Element>();
+  const [rerender, setRerender] = useState(0);
 
-  if (!nameComplete) {
-    content = <EnterName setNameComplete={setNameComplete} />;
-  } else if (showJoinGame) {
-    content = (
-      <>
-        <h1>Join a game</h1>
-        <input
-          value={gameId}
-          onChange={(e) => setGameId(e.target.value)}
-          placeholder={"Game ID"}
-        />
-        <button onClick={() => setShowJoinGame(false)}>Go back</button>
-        <button onClick={() => props.joinGame(gameId)}>Join</button>
-      </>
-    );
-  } else {
-    content = (
-      <>
-        <div className={styles.buttons}>
-          <Button onClick={() => props.createGame()}>How to play</Button>
-          <Button onClick={() => props.createGame()}>Start a new game</Button>
-          <Button onClick={() => setShowJoinGame(true)}>
-            Join an existing game
+  // if (!nameComplete) {
+  //   content = <EnterName setNameComplete={setNameComplete} />;
+  // } else
+
+  useEffect(() => {
+    if (showJoinGame) {
+      setContent(
+        <div className={styles.joinGame}>
+          <h1>Join a game</h1>
+          <Input
+            value={gameId}
+            setValue={setGameId}
+            placeholder={"Game ID"}
+            autoFocus
+          />
+          <Button onClick={() => props.joinGame(gameId)}>Join</Button>
+          <Button onClick={() => setShowJoinGame(false)} secondary>
+            Go back
           </Button>
         </div>
-      </>
-    );
-  }
+      );
+    } else {
+      setContent(
+        <>
+          <Logo />
 
-  return (
-    <div className={styles.intro}>
-      <Logo />
-      {content}
-    </div>
-  );
+          <div className={styles.buttons}>
+            <Button
+              onClick={() => {
+                alert("It should be obvious!");
+              }}
+            >
+              How to play
+            </Button>
+            <Button
+              onClick={() => {
+                if (nameComplete) {
+                  props.createGame();
+                } else {
+                  setContent(
+                    <EnterName
+                      setNameComplete={() => {
+                        props.createGame();
+                      }}
+                      cancel={() => {
+                        setRerender(Math.random());
+                        // setContent(undefined);
+                      }}
+                    />
+                  );
+                }
+              }}
+            >
+              Start a new game
+            </Button>
+            <Button onClick={() => setShowJoinGame(true)}>
+              Join an existing game
+            </Button>
+          </div>
+        </>
+      );
+    }
+  }, [showJoinGame, nameComplete, gameId, rerender]);
+
+  return <div className={styles.intro}>{content}</div>;
 };
 
 export default Intro;

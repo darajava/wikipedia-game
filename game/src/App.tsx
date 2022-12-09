@@ -43,6 +43,7 @@ import Intro from "./Intro/Intro";
 import WaitingRoom from "./WatingRoom/WaitingRoom";
 import { INTERMISSION_TIME } from "types/build/constants";
 import useLocalStorage from "./hooks/useLocalStorage";
+import { GameOver } from "./GameOver/GameOver";
 
 function App() {
   const [gameState, setGameState] = useState<GameState>();
@@ -51,11 +52,14 @@ function App() {
   const [roundOver, setRoundOver] = useState(false);
   const [gameOver, setGameOver, gameOverRef] = useState(false);
 
-  const [name, setName] = useLocalStorage("name", "");
+  const [name, setName, nameRef] = useLocalStorage("name", "");
   const [savedCanvases, setSavedCanvases] = useLocalStorage<{
     [key: string]: string;
   }>("savedCanvases", {});
-  const [canvasData, setCanvasData] = useLocalStorage<string>("canvasData", "");
+  const [canvasData, setCanvasData, canvasDataRef] = useLocalStorage<string>(
+    "canvasData",
+    ""
+  );
   const [playerId, setPlayerId, playerIdRef] = useLocalStorage<string>(
     "playerId",
     ""
@@ -127,9 +131,9 @@ function App() {
         type: ClientMessageType.CreateGame,
         data: {
           amount: 5,
-          name,
+          name: nameRef.current,
           difficulties: ["Easy", "Medium", "Hard"],
-          canvasData,
+          canvasData: canvasDataRef.current,
         },
       } as ClientMessage<CreateGameData>);
     }
@@ -161,8 +165,8 @@ function App() {
           type: ClientMessageType.JoinGame,
           data: {
             gameId,
-            name,
-            canvasData,
+            name: nameRef.current,
+            canvasData: canvasDataRef.current,
           },
         } as ClientMessage<JoinGameData>);
       }
@@ -197,10 +201,10 @@ function App() {
   };
 
   const finishGame = () => {
-    setGameState(undefined);
+    // setGameState(undefined);
     setGameOver(true);
     setScoreUpdates([]);
-    setPlayerId("");
+    // setPlayerId("");
   };
 
   const showNextHint = () => {
@@ -300,10 +304,14 @@ function App() {
   }, [gameState]);
 
   useEffect(() => {
-    const client = new W3CWebSocket("ws://localhost:8080/", "echo-protocol");
+    const client = new W3CWebSocket(
+      // @ts-ignore
+      process.env.REACT_APP_WS_URL,
+      "echo-protocol"
+    );
 
-    client.onerror = () => {
-      console.log("Connection Error");
+    client.onerror = (e) => {
+      console.log("Connection Error", e);
     };
 
     client.onopen = () => {
@@ -396,7 +404,7 @@ function App() {
 
           case ServerMessageType.GameOver:
             const gameOverData = message.data as GameOverData;
-            console.log("Game Over", message.data);
+
             finishGame();
             break;
           default:
@@ -437,8 +445,8 @@ function App() {
   const [content, setContent] = useState<JSX.Element | null>(null);
 
   useEffect(() => {
-    if (gameOver) {
-      setContent(<div>Game Over!</div>);
+    if (gameOver && gameState) {
+      setContent(<GameOver gameState={gameState} restartGame={() => {}} />);
     } else if (!gameState) {
       setContent(
         <Routes>
@@ -447,7 +455,6 @@ function App() {
             element={
               <Intro
                 joinGame={joinGame}
-                canvasData={canvasData}
                 createGame={createGame}
                 ws={clientRef.current}
               />
@@ -458,7 +465,6 @@ function App() {
             element={
               <Intro
                 joinGame={joinGame}
-                canvasData={canvasData}
                 createGame={createGame}
                 ws={clientRef.current}
               />
