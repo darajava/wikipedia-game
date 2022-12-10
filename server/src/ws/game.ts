@@ -47,6 +47,7 @@ import {
   HINT_TIME,
   INTERMISSION_TIME,
   POINT_GOAL,
+  POINT_GOAL_DEV,
   ROUND_TIME,
 } from "types/build/constants";
 import { Picture } from "../entity/Picture";
@@ -355,7 +356,9 @@ const init = () => {
     }
 
     // if score greated than 50
-    if (player.score >= POINT_GOAL) {
+    const pointGoal =
+      process.env.NODE_ENV === "production" ? POINT_GOAL : POINT_GOAL_DEV;
+    if (player.score >= pointGoal) {
       // end game
       endGame(gameState);
 
