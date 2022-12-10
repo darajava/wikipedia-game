@@ -180,7 +180,8 @@ const Round = (props: Props) => {
               })}
           </span>
           <span className={styles.right}>
-            {/* {props.gameState.currentQuestion?.difficulty} */}
+            {props.gameState.currentQuestion?.difficulty}
+            {props.gameState.currentQuestion?.difficulty === "Hard" && "!"}
           </span>
         </div>
 
