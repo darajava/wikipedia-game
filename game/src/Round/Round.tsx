@@ -105,6 +105,11 @@ const Round = (props: Props) => {
 
   return (
     <div className={`${styles.round} `}>
+      {process.env.NODE_ENV === "development" && (
+        <div className={styles.questionId}>
+          {props.gameState.currentQuestion?.possibleAnswers}
+        </div>
+      )}
       <div
         className={styles.roundContainer}
         onClick={() => {

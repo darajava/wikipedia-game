@@ -38,6 +38,8 @@ import {
   IntermissionData,
   AskForCanvasData,
   CanvasDataUpdateData,
+  RestartGameData,
+  RestartedGameData,
 } from "types";
 import { getRepository, In } from "typeorm";
 import levenshtein from "js-levenshtein";
@@ -197,6 +199,7 @@ const init = () => {
   };
 
   let roundIntervals: Map<string, NodeJS.Timeout> = new Map();
+  let roundTimeouts: Map<string, NodeJS.Timeout> = new Map();
   const nextRound = async (
     gameState: GameState,
     immediate: boolean = false,
@@ -224,7 +227,8 @@ const init = () => {
 
     console.log("Will start next round in", INTERMISSION_TIME, "ms");
     clearInterval(roundIntervals.get(gameState.id));
-    setTimeout(
+
+    const to = setTimeout(
       async () => {
         console.log("next round");
         gameState.timeLeftInMs = ROUND_TIME;
@@ -236,12 +240,15 @@ const init = () => {
         const question = await pickQuestion(gameState.difficulties);
         gameState.currentQuestion = question;
 
+        clearInterval(roundIntervals.get(gameState.id));
+
         roundIntervals.set(
           gameState.id,
           setInterval(() => {
             gameState.timeLeftInMs -= 100;
 
             if (gameState.timeLeftInMs <= 0) {
+              console.log("Time ran out");
               nextRound(gameState, false, true);
             }
           }, 100)
@@ -257,6 +264,8 @@ const init = () => {
       },
       immediate ? 0 : INTERMISSION_TIME
     );
+
+    roundTimeouts.set(gameState.id, to);
   };
 
   const startGame = async (ws: WebSocket, data: StartGameData) => {
@@ -274,15 +283,19 @@ const init = () => {
       return sendError(ws, "Not enough players");
     }
 
+    console.log("Starting game", gameState.id);
     nextRound(gameState, true);
     return;
   };
 
   const endGame = (gameState: GameState) => {
+    console.log("Ending game", gameState.id);
     gameState.currentQuestion = null;
 
     clearTimeout(roundIntervals.get(gameState.id));
     roundIntervals.delete(gameState.id);
+    clearInterval(roundTimeouts.get(gameState.id));
+    roundTimeouts.delete(gameState.id);
 
     broadcast(gameState, {
       type: ServerMessageType.GameOver,
@@ -290,6 +303,44 @@ const init = () => {
         gameState,
       },
     } as ServerMessage<GameOverData>);
+  };
+
+  const restartGame = (ws: WebSocket, data: RestartGameData) => {
+    const gameState = games.find((game) => game.id === data.gameId);
+
+    if (!gameState) {
+      return sendError(ws, "Game not found!");
+    }
+
+    if (gameState.currentQuestion) {
+      return sendError(ws, "Game already started");
+    }
+
+    if (gameState.players.length < 2) {
+      return sendError(ws, "Not enough players");
+    }
+
+    gameState.cameClose = false;
+    gameState.questionsAnswered = 0;
+    gameState.showingNumHints = 1;
+
+    gameState.players.forEach((player) => {
+      player.score = 0;
+      player.skipped = false;
+      player.typing = false;
+    });
+
+    console.log("Restarting game", gameState.id);
+    nextRound(gameState, true);
+
+    broadcast(gameState, {
+      type: ServerMessageType.RestartedGame,
+      data: {
+        gameState,
+      },
+    } as ServerMessage<RestartedGameData>);
+
+    return;
   };
 
   const updateScore = (
@@ -307,9 +358,6 @@ const init = () => {
     if (player.score >= POINT_GOAL) {
       // end game
       endGame(gameState);
-
-      // remove gamestate
-      games.splice(games.indexOf(gameState), 1);
 
       return;
     }
@@ -472,10 +520,11 @@ const init = () => {
         }
       }
 
-      updateScore(gameState, player, reason, data.guess);
       if (reason === ScoreReasons.Correct) {
+        console.log("correct answer");
         nextRound(gameState);
       }
+      updateScore(gameState, player, reason, data.guess);
     } catch (e) {
       return sendError(ws, "Invalid question");
     }
@@ -632,6 +681,7 @@ const init = () => {
 
     // if all players have skipped, move to next round
     if (gameState.players.every((player) => player.skipped)) {
+      console.log("all players skipped");
       nextRound(gameState);
     }
 
@@ -682,6 +732,8 @@ const init = () => {
         data.toString()
       ) as ClientMessage<ClientMessageData>;
 
+      console.log("Got message:", message.type);
+
       switch (message.type) {
         case ClientMessageType.JoinGame: {
           return joinGame(ws, message.data as JoinGameData);
@@ -712,6 +764,9 @@ const init = () => {
         }
         case ClientMessageType.Ping: {
           return pong(ws, message.data as PingData);
+        }
+        case ClientMessageType.RestartGame: {
+          return restartGame(ws, message.data as RestartGameData);
         }
       }
     });

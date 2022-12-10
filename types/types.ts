@@ -59,7 +59,8 @@ export type ClientMessageData =
   | TypingData
   | SkipData
   | AskForCanvasData
-  | PingData;
+  | PingData
+  | RestartGameData;
 
 export enum ClientMessageType {
   JoinGame = "join-game",
@@ -73,6 +74,7 @@ export enum ClientMessageType {
   Skip = "skip",
   Ping = "ping",
   AskForCanvasData = "ask-for-canvas-data",
+  RestartGame = "restart-game",
 }
 
 export type JoinGameData = {
@@ -131,6 +133,10 @@ export type AskForCanvasData = {
   gameId: string;
 };
 
+export type RestartGameData = {
+  gameId: string;
+};
+
 // Server message types
 export type ServerMessage<T extends ServerMessageData> = {
   type: ServerMessageType;
@@ -153,7 +159,8 @@ export type ServerMessageDataWithGameState =
   | GameOverData
   | ScoreUpdateData
   | StateUpdateData
-  | GameOverData;
+  | GameOverData
+  | RestartedGameData;
 
 export enum ServerMessageType {
   JoinedGame = "joined-game",
@@ -164,6 +171,7 @@ export enum ServerMessageType {
   Intermission = "intermission",
   ScoreUpdate = "score-update",
   GameOver = "game-over",
+  RestartedGame = "restart-game",
   StateUpdate = "state-update",
   RejoinedGameFailed = "rejoined-game-failed",
   TimeUpdate = "time-update",
@@ -197,6 +205,10 @@ export type NextRoundData = {
 };
 
 export type GameOverData = {
+  gameState: GameState;
+};
+
+export type RestartedGameData = {
   gameState: GameState;
 };
 

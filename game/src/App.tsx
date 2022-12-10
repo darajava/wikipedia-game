@@ -33,6 +33,7 @@ import {
   ServerMessageDataWithGameState,
   AskForCanvasData,
   CanvasDataUpdateData,
+  RestartGameData,
 } from "types";
 import Errors from "./Errors/Errors";
 import { Route, Router, Routes, useNavigate } from "react-router-dom";
@@ -217,6 +218,18 @@ function App() {
           playerId: playerIdRef.current,
         },
       } as ClientMessage<GuessData>);
+    }
+  };
+
+  const restartGame = () => {
+    if (!clientRef.current) return;
+    if (clientRef.current.readyState === clientRef.current.OPEN) {
+      sendData({
+        type: ClientMessageType.RestartGame,
+        data: {
+          gameId: gameState?.id,
+        },
+      } as ClientMessage<RestartGameData>);
     }
   };
 
@@ -407,8 +420,11 @@ function App() {
 
             finishGame();
             break;
-          default:
 
+          case ServerMessageType.RestartedGame:
+            setGameOver(false);
+
+            break;
           case ServerMessageType.TimeUpdate:
             const timeUpdateData = message.data as TimeUpdateData;
             console.log("Time Update", message.data);
@@ -446,7 +462,7 @@ function App() {
 
   useEffect(() => {
     if (gameOver && gameState) {
-      setContent(<GameOver gameState={gameState} restartGame={() => {}} />);
+      setContent(<GameOver gameState={gameState} restartGame={restartGame} />);
     } else if (!gameState) {
       setContent(
         <Routes>
