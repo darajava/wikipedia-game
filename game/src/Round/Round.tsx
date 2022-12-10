@@ -59,6 +59,7 @@ const Round = (props: Props) => {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const skipSound = new Audio("/sound/skip.mp3");
 
   useEffect(() => {
     console.log("showing num hints");
@@ -67,6 +68,11 @@ const Round = (props: Props) => {
         top: scrollRef.current.scrollHeight,
         behavior: "smooth",
       });
+    }
+
+    if (props.gameState.showingNumHints > 1) {
+      skipSound.play();
+      console.log("loading skip sound");
     }
   }, [props.gameState.showingNumHints]);
 

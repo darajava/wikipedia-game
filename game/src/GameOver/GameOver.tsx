@@ -24,16 +24,34 @@ export const GameOver = (props: Props) => {
     // if my score is the highest, explode
     if (orderedPlayers[0].id === playerId) {
       setTimeout(() => {
-        setIsExploding(true);
+        clap.play();
+        setTimeout(() => {
+          setIsExploding(true);
+        }, 800);
+        fireworks.play();
+
+        // after 5 seconds, fade out clap
+        setTimeout(() => {
+          setInterval(() => {
+            clap.volume -= 0.1;
+          }, 100);
+        }, 5000);
       }, 700);
     }
   }, []);
+
+  const clap = new Audio("/sound/clap.mp3");
+  const fireworks = new Audio("/sound/fireworks.mp3");
 
   return (
     <div className={styles.gameOver}>
       {/* <h1>Game Over!</h1> */}
 
-      {isExploding && <ConfettiExplosion />}
+      {isExploding && (
+        <>
+          <ConfettiExplosion />
+        </>
+      )}
 
       <h1 className={styles.gameOverText}>Game Over!</h1>
 

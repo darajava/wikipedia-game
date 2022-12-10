@@ -29,7 +29,6 @@ export type GameState = {
   difficulties: Difficulties[];
   timeLeftInMs: number;
   cameClose?: boolean;
-  isIntermission: boolean;
   stateOfPlay: StateOfPlay;
 };
 

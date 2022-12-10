@@ -216,15 +216,18 @@ const init = () => {
     });
 
     gameState.timeLeftInMs = 0;
-    gameState.isIntermission = true;
 
-    broadcast(gameState, {
-      type: ServerMessageType.Intermission,
-      data: {
-        gameState,
-        immediate,
-      },
-    } as ServerMessage<IntermissionData>);
+    if (!immediate) {
+      gameState.stateOfPlay = "intermission";
+
+      broadcast(gameState, {
+        type: ServerMessageType.Intermission,
+        data: {
+          gameState,
+          immediate,
+        },
+      } as ServerMessage<IntermissionData>);
+    }
 
     console.log("Will start next round in", INTERMISSION_TIME, "ms");
     clearInterval(roundIntervals.get(gameState.id));
@@ -235,8 +238,8 @@ const init = () => {
         gameState.timeLeftInMs = ROUND_TIME;
         gameState.showingNumHints = 1;
         gameState.cameClose = false;
-        gameState.isIntermission = false;
         gameState.questionsAnswered = gameState.questionsAnswered + 1;
+        gameState.stateOfPlay = "playing";
 
         const question = await pickQuestion(gameState.difficulties);
         gameState.currentQuestion = question;
@@ -285,7 +288,19 @@ const init = () => {
     }
 
     console.log("Starting game", gameState.id);
-    nextRound(gameState, true);
+
+    gameState.stateOfPlay = "about-to-start";
+
+    broadcast(gameState, {
+      type: ServerMessageType.StateUpdate,
+      data: {
+        gameState,
+      },
+    } as ServerMessage<StateUpdateData>);
+
+    setTimeout(() => {
+      nextRound(gameState, true);
+    }, 5000);
     return;
   };
 
@@ -297,6 +312,8 @@ const init = () => {
     roundIntervals.delete(gameState.id);
     clearInterval(roundTimeouts.get(gameState.id));
     roundTimeouts.delete(gameState.id);
+
+    gameState.stateOfPlay = "game-over";
 
     broadcast(gameState, {
       type: ServerMessageType.GameOver,
@@ -325,6 +342,8 @@ const init = () => {
     gameState.questionsAnswered = 0;
     gameState.showingNumHints = 1;
 
+    gameState.stateOfPlay = "lobby";
+
     gameState.players.forEach((player) => {
       player.score = 0;
       player.skipped = false;
@@ -332,7 +351,7 @@ const init = () => {
     });
 
     console.log("Restarting game", gameState.id);
-    nextRound(gameState, true);
+    // nextRound(gameState, true);
 
     broadcast(gameState, {
       type: ServerMessageType.RestartedGame,
@@ -445,7 +464,6 @@ const init = () => {
       questionsAnswered: -1,
       showingNumHints: 1,
       timeLeftInMs: undefined,
-      isIntermission: false,
       stateOfPlay: "lobby",
     };
 

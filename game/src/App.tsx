@@ -45,6 +45,7 @@ import WaitingRoom from "./WatingRoom/WaitingRoom";
 import { INTERMISSION_TIME } from "types/build/constants";
 import useLocalStorage from "./hooks/useLocalStorage";
 import { GameOver } from "./GameOver/GameOver";
+import { AboutToStart } from "./AboutToStart/AboutToStart";
 
 function App() {
   const [gameState, setGameState] = useState<GameState>();
@@ -311,7 +312,7 @@ function App() {
       });
     }, 100);
 
-    if (gameState?.isIntermission) {
+    if (gameState?.stateOfPlay === "intermission") {
       setRoundOver(true);
     }
   }, [gameState]);
@@ -461,9 +462,7 @@ function App() {
   const [content, setContent] = useState<JSX.Element | null>(null);
 
   useEffect(() => {
-    if (gameOver && gameState) {
-      setContent(<GameOver gameState={gameState} restartGame={restartGame} />);
-    } else if (!gameState) {
+    if (!gameState) {
       setContent(
         <Routes>
           <Route
@@ -489,30 +488,42 @@ function App() {
         </Routes>
       );
     } else {
-      if (gameState.currentQuestion) {
-        setContent(
-          <Round
-            gameState={gameState}
-            sendGuess={sendGuess}
-            showNextHint={showNextHint}
-            sendTyping={sendTyping}
-            skip={skip}
-            me={playerId}
-            scoreUpdates={scoreUpdates}
-            roundOver={roundOver}
-            timeLeft={timeLeft}
-          />
-        );
-      } else {
-        const myPlayer = gameState.players.find((p) => p.id === playerId);
+      switch (gameState.stateOfPlay) {
+        case "game-over":
+          setContent(
+            <GameOver gameState={gameState} restartGame={restartGame} />
+          );
+          break;
+        case "intermission":
+        case "playing":
+          setContent(
+            <Round
+              gameState={gameState}
+              sendGuess={sendGuess}
+              showNextHint={showNextHint}
+              sendTyping={sendTyping}
+              skip={skip}
+              me={playerId}
+              scoreUpdates={scoreUpdates}
+              roundOver={roundOver}
+              timeLeft={timeLeft}
+            />
+          );
+          break;
+        case "lobby":
+          const myPlayer = gameState.players.find((p) => p.id === playerId);
 
-        setContent(
-          <WaitingRoom
-            gameState={gameState}
-            host={myPlayer?.isHost || false}
-            startGame={() => startGame()}
-          />
-        );
+          setContent(
+            <WaitingRoom
+              gameState={gameState}
+              host={myPlayer?.isHost || false}
+              startGame={() => startGame()}
+            />
+          );
+          break;
+        case "about-to-start":
+          setContent(<AboutToStart />);
+          break;
       }
     }
   }, [
