@@ -97,7 +97,9 @@ export const GameOver = (props: Props) => {
           );
         })}
       </div>
-      <Button onClick={props.restartGame}>Play again</Button>
+      <div className={styles.restartButtonContainer}>
+        <Button onClick={props.restartGame}>Play again</Button>
+      </div>
     </div>
   );
 };

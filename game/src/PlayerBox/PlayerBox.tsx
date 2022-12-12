@@ -2,7 +2,7 @@ import styles from "./PlayerBox.module.css";
 
 import { ScoreUpdateData, Player } from "types";
 import { ScoreUpdate } from "../ScoreUpdate/ScoreUpdate";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useLocalStorage from "../hooks/useLocalStorage";
 import ProfilePic from "../ProfilePic/ProfilePic";
 
@@ -41,6 +41,8 @@ export const MAX_SCORE = 50;
 export const PlayerBox = (props: Props) => {
   const [hideText, setHideText] = useState(false);
 
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
   useEffect(() => {
     if (props.scoreUpdates && props.scoreUpdates.length > 0) {
       // if the last element is me
@@ -49,7 +51,8 @@ export const PlayerBox = (props: Props) => {
         props.player.id
       ) {
         setHideText(true);
-        setTimeout(() => {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
           setHideText(false);
         }, 2000);
       }
@@ -74,6 +77,10 @@ export const PlayerBox = (props: Props) => {
       {props.scoreUpdates?.map((result, i) => {
         if (result.player.id !== props.player.id) return null;
 
+        // if i isn't the last element
+        if (props.scoreUpdates && i !== props.scoreUpdates.length - 1) {
+          return null;
+        }
         return <ScoreUpdate key={i} update={result} />;
       })}
       <div
@@ -89,14 +96,14 @@ export const PlayerBox = (props: Props) => {
           <div className={styles.name}>
             {props.isMe ? "You" : props.player.name}
             {props.player.skipped ? " (skipped)" : ""}
+            {/* <span
+              className={`${styles.typingDots} ${
+                !props.isMe && props.player.typing ? "" : styles.hidden
+              }`}
+            >
+              ...
+            </span> */}
           </div>
-          <span
-            className={`${styles.typingDots} ${
-              !props.isMe && props.player.typing ? "" : styles.hidden
-            }`}
-          >
-            ...
-          </span>{" "}
         </span>
         <div className={styles.playerScore}>
           {parseFloat(props.player.score.toFixed(2))}

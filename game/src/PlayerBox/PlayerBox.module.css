@@ -5,7 +5,7 @@
   /* border-left: 0; */
   /* margin-left: -3px; */
   flex: 1;
-  padding: 10px 30px;
+  padding: 3px 30px;
   padding-left: 20px;
   margin: 5px;
   color: black;
@@ -26,7 +26,7 @@
   height: 100%;
   width: 100%;
   /* background-color: #00aeff; */
-  background-color: rgba(0, 0, 0, 0.092);
+  background-color: rgba(0, 255, 0, 0.418);
 
   opacity: 0.9;
   animation: fadeIn 2s ease-in-out;
@@ -82,11 +82,19 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
   /* padding-left: 35px; */
 }
 
 .name {
   margin-left: 10px;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
 }
 
 .typingDots {
@@ -100,6 +108,28 @@
 .hidden {
   opacity: 0;
   animation: none;
+}
+
+@media (max-width: 800px) {
+  .playerBox {
+    padding: 5px 10px;
+    /* padding-left: 20px; */
+    margin: 5px;
+    /* flex: 50%; */
+    display: none;
+  }
+  .me {
+    display: flex;
+  }
+
+  .mobileScore {
+    font-size: 1.4em;
+    font-weight: 700;
+    margin-left: 10px;
+    font-size: 24px;
+    font-family: "Open Sans", sans-serif;
+    /* position: relative; */
+  }
 }
 
 @keyframes typing {

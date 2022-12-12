@@ -34,3 +34,9 @@
   margin: 10px;
   width: 100%;
 }
+
+@media (max-width: 600px) {
+  .buttons {
+    flex-direction: column;
+  }
+}

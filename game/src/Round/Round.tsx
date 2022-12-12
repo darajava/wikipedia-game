@@ -136,13 +136,46 @@ const Round = (props: Props) => {
               return p2.score - p1.score;
             })
             .map((player) => (
-              <PlayerBox
-                key={player.id}
-                player={player}
-                isMe={myPlayer?.id === player.id}
-                winning={leader.id === player.id}
-                scoreUpdates={props.scoreUpdates}
-              />
+              <>
+                <PlayerBox
+                  key={player.id}
+                  player={player}
+                  isMe={myPlayer?.id === player.id}
+                  winning={leader.id === player.id}
+                  scoreUpdates={props.scoreUpdates}
+                />
+              </>
+            ))}
+        </div>
+
+        <div className={styles.playersContainerMobile}>
+          {props.gameState.players
+            .sort((p1, p2) => {
+              // put me first
+              if (myPlayer?.id === p1.id) return -1;
+              if (myPlayer?.id === p2.id) return 1;
+
+              // then sort by score
+              return p2.score - p1.score;
+            })
+            .map((player) => (
+              <>
+                {myPlayer?.id !== player.id && (
+                  <div className={styles.mobileScore}>
+                    {player.name} {player.score}
+                  </div>
+                )}
+                {/* {myPlayer?.id !== player.id && (
+                  <div className={styles.mobileScore}>
+                    {player.name} {player.score}
+                  </div>
+                )}
+                {myPlayer?.id !== player.id && (
+                  <div className={styles.mobileScore}>
+                    {player.name} {player.score}
+                  </div>
+                )} */}
+              </>
             ))}
         </div>
 
@@ -226,7 +259,7 @@ const Round = (props: Props) => {
 
               setGuess(e.target.value);
             }}
-            placeholder="Enter your guess"
+            placeholder=""
             autoFocus
             className={styles.guessInput}
             disabled={wholeBarDisabled}
@@ -245,7 +278,7 @@ const Round = (props: Props) => {
             Guess!
           </button>
           <button
-            className={styles.guessButton}
+            className={`${styles.guessButton} ${styles.hideMobile}`}
             onClick={() => {
               props.showNextHint();
             }}
@@ -257,7 +290,7 @@ const Round = (props: Props) => {
             Hint
           </button>
           <button
-            className={styles.guessButton}
+            className={`${styles.guessButton}  ${styles.hideMobile}`}
             onClick={() => {
               setGuess("");
               props.skip();

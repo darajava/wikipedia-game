@@ -1,3 +1,11 @@
+.waitingRoom {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
 .canvasContainer {
   display: flex;
   justify-content: center;
@@ -53,12 +61,8 @@
   display: inline-block;
 }
 
-.round {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
+.bottomContent {
+  margin: 20px 0;
 }
 
 .shareInput {
@@ -66,8 +70,7 @@
   box-sizing: border-box;
   padding: 14px;
   font-size: 20px;
-  margin: 45px 0;
-  margin-top: 0;
+  margin: 15px 0;
   outline: 0;
   border: 1px solid var(--primary);
   border-radius: var(--border-radius);
@@ -81,6 +84,11 @@
 }
 
 .share {
+  text-align: center;
+  background-color: var(--primary-very-muted);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--primary);
+  padding: 30px;
 }
 
 .copied {
@@ -101,6 +109,30 @@
   /* background-color: #e7ffdd; */
   background-color: var(--primary-muted);
   border-radius: var(--border-radius);
+}
+
+@media (max-width: 600px) {
+  .waitingRoom {
+    padding: var(--padding);
+    width: initial;
+  }
+
+  .playersHolder {
+    /* flex-direction: column; */
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  .canvasContainer {
+    flex: 50%;
+  }
+
+  .share {
+    font-weight: bold;
+    margin: 20px 0;
+
+    padding: var(--padding);
+  }
 }
 
 @keyframes fadeIn {

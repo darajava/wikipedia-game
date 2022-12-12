@@ -11,7 +11,7 @@
   margin: 10px;
 }
 
-.winner * {
+.winner {
   font-size: xx-large;
   /* scale: 2; */
   /* font-weight: bold; */
@@ -29,6 +29,10 @@
   flex-direction: column;
   align-items: center;
   margin: 50px;
+  border: 2px solid var(--primary);
+  background-color: var(--primary-very-muted);
+  padding: 0px 80px;
+  border-radius: 10px;
 }
 
 .losersContainer {
@@ -36,6 +40,22 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  margin-bottom: 30px;
+  opacity: 0.8;
+}
+
+.restartButtonContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 10px;
+  animation: easeIn 3s ease-in-out;
+  animation-fill-mode: forwards;
+  animation-delay: 1s;
+  transform: scale(0);
+  /* width: 100%; */
+  text-align: center;
 }
 
 @keyframes easeIn {

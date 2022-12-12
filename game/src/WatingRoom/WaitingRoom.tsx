@@ -44,11 +44,15 @@ const WaitingRoom = (props: Props) => {
 
   const [questions, setQuestions] = useState<string[]>([]);
 
-  let bottomContent = <>Waiting for more players...</>;
+  let topContent = <>Waiting for more players...</>;
 
   if (props.gameState.players.length > 1) {
     if (props.host) {
-      bottomContent = <Button onClick={props.startGame}>Start!</Button>;
+      topContent = (
+        <Button pulse onClick={props.startGame}>
+          Start!
+        </Button>
+      );
     } else {
       // get host's name
       const host = props.gameState.players.find(
@@ -56,13 +60,13 @@ const WaitingRoom = (props: Props) => {
       )?.name;
 
       if (host) {
-        bottomContent = (
+        topContent = (
           <p>
             Waiting for <b>{host}</b> to start the game...
           </p>
         );
       } else {
-        bottomContent = <p>Waiting for host to start the game...</p>;
+        topContent = <p>Waiting for host to start the game...</p>;
       }
     }
   }
@@ -78,11 +82,8 @@ const WaitingRoom = (props: Props) => {
     shareContent = (
       <div className={styles.share}>
         {/* You can play with up to 4 players, share this link to invite people */}
-        <p>
-          You can play Wikibaby with up to 4 people. Copy this link to invite
-          players:
-        </p>
-
+        You can play Wikibaby with up to 4 people. Copy this link to invite
+        players:
         <div
           className={styles.shareInput}
           onClick={() => {
@@ -102,7 +103,8 @@ Click here to join: ${window.location.href}`);
             }, 3000);
           }}
         >
-          {window.location.href} 📋
+          {window.location.href.replace("http://", "").replace("https://", "")}{" "}
+          📋
           {copiedText && (
             <div className={styles.copied}>Copied to clipboard! ✅</div>
           )}
@@ -113,32 +115,33 @@ Click here to join: ${window.location.href}`);
   }
 
   return (
-    <div className={styles.round}>
+    <div className={styles.waitingRoom}>
       <h1>Lobby</h1>
+      <div className={styles.bottomContent}>{topContent}</div>
+      {shareContent}
+
       <div className={styles.playersHolder}>
         {props.gameState.players.map((player, index) => {
           // crown emoji
           const crown = "👑";
 
           return (
-            <div className={styles.canvasContainer} key={index}>
-              {/* <div className={styles.crown}>{player?.isHost ? crown : ""}</div> */}
-              <ProfilePic
-                player={player}
-                width={100}
-                margin={10}
-                immediateLoading={false}
-                rotate
-              />
-              <div className={styles.name}>{player?.name}</div>
-            </div>
+            <>
+              <div className={styles.canvasContainer} key={index}>
+                {/* <div className={styles.crown}>{player?.isHost ? crown : ""}</div> */}
+                <ProfilePic
+                  player={player}
+                  width={100}
+                  margin={10}
+                  immediateLoading={false}
+                  rotate
+                />
+                <div className={styles.name}>{player?.name}</div>
+              </div>
+            </>
           );
         })}
       </div>
-
-      {shareContent}
-
-      <div className={styles.bottomContent}>{bottomContent}</div>
     </div>
   );
 };

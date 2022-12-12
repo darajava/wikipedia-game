@@ -81,7 +81,7 @@
   font-weight: bold;
   background-color: white;
   border: 2px solid black;
-  border-radius: 10px;
+  border-radius: var(--padding);
   margin: 5px;
   outline: none;
   transition: all 0.5s;
@@ -92,13 +92,13 @@
   flex: 5;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
-  margin-right: 0;
+  margin-right: 0 !important;
 }
 
 .join {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  margin-left: -2px;
+  margin-left: -2px !important;
   /* z-index: -1; */
 }
 
@@ -169,6 +169,54 @@ input:disabled {
 .fadeOut {
   animation: fadeOut 1s ease-in-out;
   animation-fill-mode: forwards;
+}
+
+.playersContainerMobile {
+  display: none;
+}
+
+@media (max-width: 850px) {
+  .round {
+    width: initial;
+  }
+  .roundContainer {
+    width: auto;
+    margin: var(--padding);
+  }
+  .guessInput {
+    width: inherit;
+  }
+  .playersContainerMobile {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 10px;
+  }
+  .mobileScore {
+    flex: 1;
+    text-align: center;
+    border-right: 1px solid var(--primary);
+    /* max-width: 50%; */
+    height: auto;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+  }
+  .mobileScore:last-child {
+    border-right: none;
+  }
+  .guessButton,
+  .guessInput {
+    margin: 2px;
+  }
+
+  .hideMobile {
+    display: none;
+  }
 }
 
 @keyframes fadeOut {
