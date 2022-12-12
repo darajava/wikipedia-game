@@ -21,6 +21,15 @@ const Round = (props: Props) => {
   const [questions, setQuestions] = useState<string[]>([]);
   const [guess, setGuess] = useState("");
 
+  // play nextround.mp3, unless first question
+  useEffect(() => {
+    console.log("questions answered", props.gameState.questionsAnswered);
+    if (props.gameState.questionsAnswered > 0) {
+      const audio = new Audio("/sound/nextround.mp3");
+      // audio.play();
+    }
+  }, [props.gameState.questionsAnswered]);
+
   useEffect(() => {
     try {
       if (props.gameState.currentQuestion?.questions) {
@@ -59,7 +68,6 @@ const Round = (props: Props) => {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const skipSound = new Audio("/sound/skip.mp3");
 
   useEffect(() => {
     console.log("showing num hints");
@@ -68,11 +76,6 @@ const Round = (props: Props) => {
         top: scrollRef.current.scrollHeight,
         behavior: "smooth",
       });
-    }
-
-    if (props.gameState.showingNumHints > 1) {
-      skipSound.play();
-      console.log("loading skip sound");
     }
   }, [props.gameState.showingNumHints]);
 
@@ -159,6 +162,8 @@ const Round = (props: Props) => {
         <div className={`${styles.title} ${fadeOut ? styles.fadeOut : ""}`}>
           <span className={styles.left}>
             {/* {props.gameState.questionsAnswered}/{props.gameState.totalQuestions} */}
+            {props.gameState.currentQuestion?.difficulty}
+            {props.gameState.currentQuestion?.difficulty === "Hard" && "!"}
           </span>
           <span className={styles.center}>
             {decodeURIComponent(props.gameState.currentQuestion?.link || "")
@@ -179,10 +184,7 @@ const Round = (props: Props) => {
                 );
               })}
           </span>
-          <span className={styles.right}>
-            {props.gameState.currentQuestion?.difficulty}
-            {props.gameState.currentQuestion?.difficulty === "Hard" && "!"}
-          </span>
+          <span className={styles.right}></span>
         </div>
 
         <div

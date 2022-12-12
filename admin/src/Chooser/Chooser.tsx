@@ -10,6 +10,7 @@ function Chooser() {
     links: string[];
     link: string;
     difficulty?: string;
+    seeAlso?: string[];
     addedBy?: string;
     difficulties: { [key: string]: number };
   } | null>(null);
@@ -186,21 +187,42 @@ function Chooser() {
       </div>
       <br />
       <br />
+      <span
+        className={styles.link}
+        onClick={() => {
+          console.log(links.current);
+          const last = links.current.pop();
+          if (last) {
+            chooseAnswer(last);
+          }
+        }}
+      >
+        {/* /// back arrow unicode */}
+        &#x21A9; Back
+      </span>
 
+      {gameData.seeAlso && gameData.seeAlso.length > 0 && (
+        <>
+          <h3>See also</h3>
+          <div className={styles.linksContainer}>
+            {gameData.seeAlso?.map((link, index) => (
+              <span
+                className={styles.link}
+                key={link + index}
+                onClick={() => {
+                  chooseAnswer(link);
+                }}
+              >
+                {link}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+      <br />
+
+      <h3>Links</h3>
       <div className={styles.linksContainer}>
-        <span
-          className={styles.link}
-          onClick={() => {
-            console.log(links.current);
-            const last = links.current.pop();
-            if (last) {
-              chooseAnswer(last);
-            }
-          }}
-        >
-          {/* /// back arrow unicode */}
-          &#x21A9; Back
-        </span>
         {gameData.links.map((link, index) => (
           <span
             className={styles.link}
@@ -213,6 +235,7 @@ function Chooser() {
           </span>
         ))}
       </div>
+
       <br />
       <br />
       <br />

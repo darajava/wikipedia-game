@@ -7,10 +7,17 @@ type Props = {
 };
 
 export const Button = (props: Props) => {
+  const click = new Audio("/sound/click.mp3");
+
   return (
     <button
       className={`${styles.button} ${props.secondary ? styles.secondary : ""}`}
-      onClick={props.onClick}
+      onClick={() => {
+        if (!props.secondary) {
+          // click.play();
+        }
+        props.onClick();
+      }}
     >
       {props.children}
     </button>

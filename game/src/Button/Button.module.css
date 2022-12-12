@@ -13,6 +13,16 @@
   border: 2px solid var(--black);
 }
 
+.button:hover {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+.button:active {
+  background-color: var(--primary-muted);
+  color: var(--white);
+}
+
 .secondary {
   background-color: transparent;
   color: var(--black);

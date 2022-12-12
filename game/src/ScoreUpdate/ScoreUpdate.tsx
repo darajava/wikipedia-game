@@ -76,6 +76,39 @@ export const ScoreUpdate = (props: Props) => {
         break;
     }
 
+    // play wrong.mp3 if incorrect
+    if (
+      props.update.reason === ScoreReasons.Incorrect ||
+      props.update.reason === ScoreReasons.Close
+    ) {
+      const wrong = new Audio("/sound/wrong.mp3");
+      wrong.play();
+    }
+
+    // play correct.mp3 if correct
+    if (props.update.reason === ScoreReasons.Correct) {
+      const correct = new Audio("/sound/correct.mp3");
+      correct.play();
+    }
+
+    // play skip.mp3 if skipped
+    if (props.update.reason === ScoreReasons.Skipped) {
+      const skip = new Audio("/sound/skip.mp3");
+      skip.play();
+    }
+
+    // play hint.mp3 if hint used
+    if (props.update.reason === ScoreReasons.ShowHint) {
+      const hint = new Audio("/sound/hint.mp3");
+      hint.play();
+    }
+
+    // // play timeout.mp3 if time ran out
+    // if (props.update.reason === ScoreReasons.LetTimeRunOut) {
+    //   const time = new Audio("/sound/timeout.mp3");
+    //   time.play();
+    // }
+
     if (props.update.points > 5) {
       setStyle(styles.green);
     } else if (props.update.points < 0) {

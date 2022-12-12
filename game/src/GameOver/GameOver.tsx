@@ -23,12 +23,12 @@ export const GameOver = (props: Props) => {
   useEffect(() => {
     // if my score is the highest, explode
     if (orderedPlayers[0].id === playerId) {
+      clap.play();
       setTimeout(() => {
-        clap.play();
+        // fireworks.play();
         setTimeout(() => {
           setIsExploding(true);
         }, 800);
-        fireworks.play();
 
         // after 5 seconds, fade out clap
         setTimeout(() => {
@@ -40,7 +40,7 @@ export const GameOver = (props: Props) => {
     }
   }, []);
 
-  const clap = new Audio("/sound/clap.mp3");
+  const clap = new Audio("/sound/win.mp3");
   const fireworks = new Audio("/sound/fireworks.mp3");
 
   return (

@@ -36,6 +36,12 @@ const WaitingRoom = (props: Props) => {
     // setTest("test2");
   }, [savedCanvases, props.gameState.players]);
 
+  // play click when players.length changes
+  useEffect(() => {
+    const click = new Audio("/sound/click.mp3");
+    click.play();
+  }, [props.gameState.players.length]);
+
   const [questions, setQuestions] = useState<string[]>([]);
 
   let bottomContent = <>Waiting for more players...</>;
@@ -108,7 +114,7 @@ Click here to join: ${window.location.href}`);
 
   return (
     <div className={styles.round}>
-      <h1>Waiting room</h1>
+      <h1>Lobby</h1>
       <div className={styles.playersHolder}>
         {props.gameState.players.map((player, index) => {
           // crown emoji

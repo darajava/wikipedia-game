@@ -12,7 +12,7 @@ router.get("/", (req, res) => {
 });
 
 // function to remove all text between balanced parentheses
-function removeParentheses(text: string) {
+function removeDoubleBraces(text: string) {
   // replace all instanced of {{ with G
   text = text.replace(/\{\{/g, "⦑");
 
@@ -107,6 +107,58 @@ function returnLinks(text: string) {
         links.push(split[0].trim());
       } else {
         links.push(link.trim());
+      }
+    }
+  }
+
+  // capture text between {{annotated link| and }}
+  const regex2 = /\{\{annotated link\|(.*?)\}\}/g;
+  const matches2 = text.match(regex2);
+
+  if (matches2) {
+    for (const match of matches2) {
+      // remove {{annotated link| and }}
+      const link = match.slice(17, -2);
+      // replace link with text of link
+
+      if (link.includes(":")) {
+        continue;
+      }
+      if (link.includes("|")) {
+        const split = link.split("|");
+        links.push(split[0].trim());
+      } else if (link.includes("#")) {
+        const split = link.split("#");
+        links.push(split[0].trim());
+      } else {
+        links.push(link.trim());
+      }
+    }
+  }
+
+  return links;
+}
+
+// replace links with the text of the link
+function returnSeeAlso(text: string) {
+  // replace all newlines
+  text = text.replace(/\n/g, " ");
+
+  // get content between ==see also== and next header
+  const regex = /== ?see also(.*)/gi;
+  const matches = text.match(regex);
+
+  console.log("matches", matches);
+  console.log("matches", text.slice(0, 100));
+
+  const links = [];
+
+  if (matches) {
+    for (const match of matches) {
+      const seeAlsoLinks = returnLinks(match);
+
+      for (const seeAlsoLink of seeAlsoLinks) {
+        links.push(seeAlsoLink);
       }
     }
   }
@@ -332,12 +384,14 @@ router.get("/article-info/:name", async (req, res) => {
       }
       let content = page.revisions[0]["*"];
 
+      let rawContent = content;
+
       print(content);
 
       let answers = getRedirects(content);
 
       // remove all text between {{ }}
-      content = removeParentheses(content);
+      content = removeDoubleBraces(content);
 
       print(content);
 
@@ -441,7 +495,8 @@ router.get("/article-info/:name", async (req, res) => {
 
       res.send({
         answers,
-        links: returnLinks(contentWithLinks).slice(0, 20),
+        links: returnLinks(rawContent).slice(0, 20),
+        seeAlso: returnSeeAlso(rawContent),
         questions,
         content,
         link,

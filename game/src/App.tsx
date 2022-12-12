@@ -291,7 +291,7 @@ function App() {
 
   const [scoreUpdates, setScoreUpdates] = useState<ScoreUpdateData[]>([]);
 
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [timeLeft, setTimeLeft, timeLeftRef] = useState(0);
 
   const timeIntervalRef = useRef<NodeJS.Timeout>();
 
@@ -313,6 +313,11 @@ function App() {
     }, 100);
 
     if (gameState?.stateOfPlay === "intermission") {
+      if (gameState?.timeLeftInMs <= 0) {
+        // play timeout.mp3
+        const time = new Audio("/sound/timeout.mp3");
+        time.play();
+      }
       setRoundOver(true);
     }
   }, [gameState]);

@@ -215,7 +215,7 @@ const init = () => {
       player.skipped = false;
     });
 
-    gameState.timeLeftInMs = 0;
+    // gameState.timeLeftInMs = 0;
 
     if (!immediate) {
       gameState.stateOfPlay = "intermission";
@@ -300,7 +300,7 @@ const init = () => {
 
     setTimeout(() => {
       nextRound(gameState, true);
-    }, 5000);
+    }, 4000);
     return;
   };
 
