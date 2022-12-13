@@ -322,19 +322,9 @@ router.get("/random", async (req, res) => {
     const questions = await userRepository.find();
 
     // pick random question
-    const question =
-      questions[Math.floor(Math.random() * questions.length)].link;
+    const title = questions[Math.floor(Math.random() * questions.length)].link;
 
-    fetch(
-      `https://en.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&titles=${question}&redirects=`
-      // { responseType: "arraybuffer" }
-    )
-      .then((r) => r.json())
-      .then((response) => {
-        const title = response.query.random[0].title;
-
-        res.json({ title });
-      });
+    res.json({ title });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
