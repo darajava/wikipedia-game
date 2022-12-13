@@ -1,6 +1,8 @@
 import { createRef, useEffect, useRef, useState } from "react";
+import Div100vh from "react-div-100vh";
 import { GameState, ScoreUpdateData, Player, Question } from "types";
 import { ROUND_TIME } from "types/build/constants";
+import useDocumentHeight from "../hooks/useDocumentHeight";
 import { PlayerBox } from "../PlayerBox/PlayerBox";
 import { Sentence } from "../Sentence/Sentence";
 import styles from "./Round.module.css";
@@ -42,10 +44,6 @@ const Round = (props: Props) => {
   }, [props.gameState]);
 
   useEffect(() => {
-    console.log("timeLeft", props.timeLeft);
-  }, [props.timeLeft]);
-
-  useEffect(() => {
     console.log(
       "Getting new question",
       props.gameState.currentQuestion?.possibleAnswers
@@ -67,6 +65,7 @@ const Round = (props: Props) => {
   // }, [props.me]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,6 +83,8 @@ const Round = (props: Props) => {
   const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [showedSomeLetters, setShowedSomeLetters] = useState(false);
+
+  const documentHeight = useDocumentHeight();
 
   useEffect(() => {
     console.log("showing num hints");
@@ -112,6 +113,11 @@ const Round = (props: Props) => {
 
   const wholeBarDisabled = myPlayer?.skipped || props.roundOver;
 
+  useEffect(() => {
+    // set body height to document height
+    document.body.style.height = documentHeight + "px";
+  }, [documentHeight]);
+
   return (
     <div className={`${styles.round} `}>
       {process.env.NODE_ENV === "development" && (
@@ -121,6 +127,11 @@ const Round = (props: Props) => {
       )}
       <div
         className={styles.roundContainer}
+        style={
+          {
+            // height: documentHeight,
+          }
+        }
         onClick={() => {
           inputRef.current?.focus();
         }}
@@ -148,37 +159,6 @@ const Round = (props: Props) => {
             ))}
         </div>
 
-        <div className={styles.playersContainerMobile}>
-          {props.gameState.players
-            .sort((p1, p2) => {
-              // put me first
-              if (myPlayer?.id === p1.id) return -1;
-              if (myPlayer?.id === p2.id) return 1;
-
-              // then sort by score
-              return p2.score - p1.score;
-            })
-            .map((player) => (
-              <>
-                {myPlayer?.id !== player.id && (
-                  <div className={styles.mobileScore}>
-                    {player.name} {player.score}
-                  </div>
-                )}
-                {/* {myPlayer?.id !== player.id && (
-                  <div className={styles.mobileScore}>
-                    {player.name} {player.score}
-                  </div>
-                )}
-                {myPlayer?.id !== player.id && (
-                  <div className={styles.mobileScore}>
-                    {player.name} {player.score}
-                  </div>
-                )} */}
-              </>
-            ))}
-        </div>
-
         <div
           style={{
             background: "var(--secondary)",
@@ -192,53 +172,54 @@ const Round = (props: Props) => {
           }}
         />
 
-        <div className={`${styles.title} ${fadeOut ? styles.fadeOut : ""}`}>
-          <span className={styles.left}>
-            {/* {props.gameState.questionsAnswered}/{props.gameState.totalQuestions} */}
-            {props.gameState.currentQuestion?.difficulty}
-            {props.gameState.currentQuestion?.difficulty === "Hard" && "!"}
-          </span>
-          <span className={styles.center}>
-            {decodeURIComponent(props.gameState.currentQuestion?.link || "")
-              .split("")
-              .map((c, i) => {
-                if (c === " ") {
-                  return <span key={i}>&nbsp;</span>;
-                }
-                return (
-                  <span
-                    key={i}
-                    className={`${styles.underline}${
-                      props.roundOver ? styles.show : ""
-                    }`}
-                  >
-                    {c}
-                  </span>
-                );
-              })}
-          </span>
-          <span className={styles.right}></span>
-        </div>
-
         <div
           className={`${styles.questionContainer} ${
             fadeOut ? styles.fadeOut : ""
           }`}
           ref={scrollRef}
         >
-          {questions.map((question, i) => {
-            if (i >= props.gameState.showingNumHints) return null;
+          <div className={styles.questionContent} ref={contentRef}>
+            <div className={`${styles.title} ${fadeOut ? styles.fadeOut : ""}`}>
+              <span className={styles.left}>
+                {/* {props.gameState.questionsAnswered}/{props.gameState.totalQuestions} */}
+                {props.gameState.currentQuestion?.difficulty}
+                {props.gameState.currentQuestion?.difficulty === "Hard" && "!"}
+              </span>
+              <span className={styles.center}>
+                {decodeURIComponent(props.gameState.currentQuestion?.link || "")
+                  .split("")
+                  .map((c, i) => {
+                    if (c === " ") {
+                      return <span key={i}>&nbsp;</span>;
+                    }
+                    return (
+                      <span
+                        key={i}
+                        className={`${styles.underline}${
+                          props.roundOver ? styles.show : ""
+                        }`}
+                      >
+                        {c}
+                      </span>
+                    );
+                  })}
+              </span>
+              <span className={styles.right}></span>
+            </div>
+            {questions.map((question, i) => {
+              if (i >= props.gameState.showingNumHints) return null;
 
-            return (
-              <Sentence
-                key={question}
-                odd={i % 2 === 0}
-                sentence={question}
-                revealed={props.roundOver}
-                showSome={showedSomeLetters}
-              />
-            );
-          })}
+              return (
+                <Sentence
+                  key={question}
+                  odd={i % 2 === 0}
+                  sentence={question}
+                  revealed={props.roundOver}
+                  showSome={showedSomeLetters}
+                />
+              );
+            })}
+          </div>
         </div>
 
         <div className={`${styles.guessBar}`}>
@@ -259,7 +240,7 @@ const Round = (props: Props) => {
 
               setGuess(e.target.value);
             }}
-            placeholder=""
+            placeholder="Type..."
             autoFocus
             className={styles.guessInput}
             disabled={wholeBarDisabled}
@@ -291,6 +272,30 @@ const Round = (props: Props) => {
           </button>
           <button
             className={`${styles.guessButton}  ${styles.hideMobile}`}
+            onClick={() => {
+              setGuess("");
+              props.skip();
+            }}
+            disabled={wholeBarDisabled}
+          >
+            Skip{myPlayer?.skipped ? "ped!" : ""}
+          </button>
+        </div>
+        <div className={`${styles.mobileOnly} ${styles.mobileButtons}`}>
+          <button
+            className={`${styles.mobileButton}`}
+            onClick={() => {
+              props.showNextHint();
+            }}
+            disabled={
+              wholeBarDisabled ||
+              props.gameState.showingNumHints >= questions.length
+            }
+          >
+            Hint
+          </button>
+          <button
+            className={`${styles.mobileButton}  `}
             onClick={() => {
               setGuess("");
               props.skip();

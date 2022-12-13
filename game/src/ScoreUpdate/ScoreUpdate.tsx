@@ -65,13 +65,7 @@ export const ScoreUpdate = (props: Props) => {
         label = randomElement(skippedLabels);
         break;
       case ScoreReasons.LetTimeRunOut:
-        label =
-          "Should have skipped like " +
-          props.update.gameState.players
-            .filter((player) => player.skipped)
-            .map((player) => player.name)
-            .slice(0, 2)
-            .join(" and ");
+        label = "Out of time";
 
         break;
     }

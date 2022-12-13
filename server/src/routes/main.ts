@@ -316,8 +316,18 @@ function uniqCaseInsensitive(array: string[]) {
 // route to get random wikipedia article title
 router.get("/random", async (req, res) => {
   try {
+    const userRepository = AppDataSource.getRepository(Question);
+
+    // find this question by link in database
+    const questions = await userRepository.find();
+
+    // pick random question
+    const question =
+      questions[Math.floor(Math.random() * questions.length)].link;
+
     fetch(
-      "https://en.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&rnlimit=1&format=json"
+      `https://en.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&titles=${question}&redirects=`
+      // { responseType: "arraybuffer" }
     )
       .then((r) => r.json())
       .then((response) => {

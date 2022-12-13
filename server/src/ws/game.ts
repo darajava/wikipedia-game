@@ -59,7 +59,7 @@ export const SCORES = {
   [ScoreReasons.Incorrect]: -2,
   [ScoreReasons.ShowHint]: -1,
   [ScoreReasons.Skipped]: -1,
-  [ScoreReasons.LetTimeRunOut]: -5,
+  [ScoreReasons.LetTimeRunOut]: -1,
 };
 const randomString = (len) => {
   let result = "";

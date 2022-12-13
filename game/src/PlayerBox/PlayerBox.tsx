@@ -62,52 +62,60 @@ export const PlayerBox = (props: Props) => {
   const percentageDone = (props.player.score / MAX_SCORE) * 100;
 
   return (
-    <div
-      className={`${styles.playerBox} ${props.isMe ? styles.me : ""}
+    <div className={styles.wrapper}>
+      <div
+        className={`${styles.playerBox} ${props.isMe ? styles.me : ""}
       ${props.winning ? styles.winning : ""}
       ${props.player.skipped ? styles.skipped : ""}
       `}
-    >
-      <div
-        className={styles.scoreBar}
-        style={{
-          width: `${percentageDone}%`,
-        }}
-      />
-      {props.scoreUpdates?.map((result, i) => {
-        if (result.player.id !== props.player.id) return null;
-
-        // if i isn't the last element
-        if (props.scoreUpdates && i !== props.scoreUpdates.length - 1) {
-          return null;
-        }
-        return <ScoreUpdate key={i} update={result} />;
-      })}
-      <div
-        className={`${styles.playerName} ${hideText ? styles.hideText : ""}`}
       >
-        <span className={styles.nameHolder}>
-          <ProfilePic
-            player={props.player}
-            immediateLoading={true}
-            width={60}
-            fade={props.player.skipped}
-          />
-          <div className={styles.name}>
-            {props.isMe ? "You" : props.player.name}
-            {props.player.skipped ? " (skipped)" : ""}
-            {/* <span
+        <div
+          className={styles.scoreBar}
+          style={{
+            width: `${percentageDone}%`,
+          }}
+        />
+        {props.scoreUpdates?.map((result, i) => {
+          if (result.player.id !== props.player.id) return null;
+
+          // if i isn't the last element
+          if (props.scoreUpdates && i !== props.scoreUpdates.length - 1) {
+            return null;
+          }
+          return <ScoreUpdate key={i} update={result} />;
+        })}
+        <div
+          className={`${styles.playerName} ${hideText ? styles.hideText : ""}`}
+        >
+          <span className={styles.nameHolder}>
+            <div className={styles.profilePic}>
+              <ProfilePic
+                player={props.player}
+                immediateLoading={true}
+                width={60}
+                fade={props.player.skipped}
+              />
+            </div>
+            <div className={styles.name}>
+              {props.isMe ? "You" : props.player.name}
+              {props.player.skipped ? " (skipped)" : ""}
+              {/* <span
               className={`${styles.typingDots} ${
                 !props.isMe && props.player.typing ? "" : styles.hidden
               }`}
             >
               ...
             </span> */}
+            </div>
+          </span>
+          <div className={styles.playerScore}>
+            {parseFloat(props.player.score.toFixed(2))}
           </div>
-        </span>
-        <div className={styles.playerScore}>
-          {parseFloat(props.player.score.toFixed(2))}
         </div>
+      </div>
+
+      <div className={styles.playerScoreMobile}>
+        {parseFloat(props.player.score.toFixed(2))}
       </div>
     </div>
   );
