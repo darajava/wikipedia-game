@@ -118,6 +118,10 @@
   animation: none;
 }
 
+.playerScoreMobile {
+  display: none;
+}
+
 @media (max-width: 800px) {
   .playerBox {
     padding: 10px 10px;

@@ -34,6 +34,8 @@ import {
   AskForCanvasData,
   CanvasDataUpdateData,
   RestartGameData,
+  ClientChatData,
+  ServerChatData,
 } from "types";
 import Errors from "./Errors/Errors";
 import { Route, Router, Routes, useNavigate } from "react-router-dom";
@@ -187,6 +189,22 @@ function App() {
     }
   };
 
+  const sendChat = (message: string) => {
+    if (!clientRef.current) return;
+    if (clientRef.current.readyState === clientRef.current.OPEN) {
+      if (message.trim() === "") return;
+
+      sendData({
+        type: ClientMessageType.Chat,
+        data: {
+          gameId: gameState?.id,
+          playerId: playerIdRef.current,
+          message,
+        },
+      } as ClientMessage<ClientChatData>);
+    }
+  };
+
   const endGame = () => {
     if (!clientRef.current) return;
     if (clientRef.current.readyState === clientRef.current.OPEN) {
@@ -292,6 +310,10 @@ function App() {
   const [scoreUpdates, setScoreUpdates] = useState<ScoreUpdateData[]>([]);
 
   const [timeLeft, setTimeLeft, timeLeftRef] = useState(0);
+
+  const [chatMessages, setChatMessages] = useState<
+    { message: string; playerId: string }[]
+  >([]);
 
   const timeIntervalRef = useRef<NodeJS.Timeout>();
 
@@ -401,8 +423,8 @@ function App() {
             const scoreUpdateData = message.data as ScoreUpdateData;
             console.log("Guess Result", message.data);
 
-            setScoreUpdates((guessResults) => [
-              ...guessResults,
+            setScoreUpdates((scoreUpdates) => [
+              ...scoreUpdates,
               scoreUpdateData,
             ]);
             break;
@@ -435,6 +457,20 @@ function App() {
             const timeUpdateData = message.data as TimeUpdateData;
             console.log("Time Update", message.data);
             setTimeLeft(timeUpdateData.timeLeftInMs);
+            break;
+
+          case ServerMessageType.Chat:
+            const chatData = message.data as ServerChatData;
+
+            // play chat.mp3
+            const chat = new Audio("/sound/click.mp3");
+            chat.play();
+
+            setChatMessages((chatMessages) => [
+              ...chatMessages,
+              { message: chatData.message, playerId: chatData.playerId },
+            ]);
+
             break;
 
           case ServerMessageType.Error:
@@ -523,6 +559,8 @@ function App() {
               gameState={gameState}
               host={myPlayer?.isHost || false}
               startGame={() => startGame()}
+              sendChat={sendChat}
+              chatMessages={chatMessages}
             />
           );
           break;
@@ -542,6 +580,7 @@ function App() {
     canvasData,
     savedCanvases,
     playerId,
+    chatMessages,
   ]);
 
   return (

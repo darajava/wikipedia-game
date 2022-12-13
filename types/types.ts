@@ -9,6 +9,7 @@ export type Player = {
   isHost: boolean;
   typing: boolean;
   skipped: boolean;
+  showingNumHints: number;
   canvasDataHash: string;
 };
 
@@ -24,7 +25,6 @@ export type GameState = {
   players: Player[];
   hostName: string;
   currentQuestion?: Question;
-  showingNumHints: number;
   questionsAnswered: number;
   difficulties: Difficulties[];
   timeLeftInMs: number;
@@ -59,7 +59,8 @@ export type ClientMessageData =
   | SkipData
   | AskForCanvasData
   | PingData
-  | RestartGameData;
+  | RestartGameData
+  | ClientChatData;
 
 export enum ClientMessageType {
   JoinGame = "join-game",
@@ -74,6 +75,7 @@ export enum ClientMessageType {
   Ping = "ping",
   AskForCanvasData = "ask-for-canvas-data",
   RestartGame = "restart-game",
+  Chat = "chat",
 }
 
 export type JoinGameData = {
@@ -136,6 +138,12 @@ export type RestartGameData = {
   gameId: string;
 };
 
+export type ClientChatData = {
+  gameId: string;
+  playerId: string;
+  message: string;
+};
+
 // Server message types
 export type ServerMessage<T extends ServerMessageData> = {
   type: ServerMessageType;
@@ -149,7 +157,8 @@ export type ServerMessageData =
   | RejoinedGameFailedData
   | TimeUpdateData
   | CanvasDataUpdateData
-  | ServerMessageDataWithGameState;
+  | ServerMessageDataWithGameState
+  | ServerChatData;
 
 export type ServerMessageDataWithGameState =
   | JoinedGameData
@@ -175,6 +184,7 @@ export enum ServerMessageType {
   RejoinedGameFailed = "rejoined-game-failed",
   TimeUpdate = "time-update",
   CanvasDataUpdate = "canvas-data-update",
+  Chat = "chat",
 }
 
 export type JoinedGameData = {
@@ -221,6 +231,11 @@ export type StateUpdateData = {
 
 export type TimeUpdateData = {
   timeLeftInMs: number;
+};
+
+export type ServerChatData = {
+  message: string;
+  playerId: string;
 };
 
 export type CanvasDataUpdateData = {

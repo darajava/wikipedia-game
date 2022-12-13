@@ -40,6 +40,8 @@ import {
   CanvasDataUpdateData,
   RestartGameData,
   RestartedGameData,
+  ClientChatData,
+  ServerChatData,
 } from "types";
 import { getRepository, In } from "typeorm";
 import levenshtein from "js-levenshtein";
@@ -145,6 +147,7 @@ const init = () => {
       canvasDataHash,
       skipped: false,
       score: 0,
+      showingNumHints: 1,
       isHost: false,
       typing: false,
     } as Player;
@@ -236,10 +239,13 @@ const init = () => {
       async () => {
         console.log("next round");
         gameState.timeLeftInMs = ROUND_TIME;
-        gameState.showingNumHints = 1;
         gameState.cameClose = false;
         gameState.questionsAnswered = gameState.questionsAnswered + 1;
         gameState.stateOfPlay = "playing";
+
+        gameState.players.forEach((player) => {
+          player.showingNumHints = 1;
+        });
 
         const question = await pickQuestion(gameState.difficulties);
         gameState.currentQuestion = question;
@@ -340,11 +346,11 @@ const init = () => {
 
     gameState.cameClose = false;
     gameState.questionsAnswered = 0;
-    gameState.showingNumHints = 1;
 
     gameState.stateOfPlay = "lobby";
 
     gameState.players.forEach((player) => {
+      player.showingNumHints = 1;
       player.score = 0;
       player.skipped = false;
       player.typing = false;
@@ -448,6 +454,7 @@ const init = () => {
       typing: false,
       canvasDataHash,
       skipped: false,
+      showingNumHints: 1,
     } as Player;
 
     let id = randomString(5);
@@ -462,7 +469,6 @@ const init = () => {
       currentQuestion: null,
       difficulties: data.difficulties,
       questionsAnswered: -1,
-      showingNumHints: 1,
       timeLeftInMs: undefined,
       stateOfPlay: "lobby",
     };
@@ -578,7 +584,7 @@ const init = () => {
 
     updateScore(gameState, player, ScoreReasons.ShowHint);
 
-    gameState.showingNumHints = gameState.showingNumHints + 1;
+    player.showingNumHints = player.showingNumHints + 1;
 
     broadcast(gameState, {
       type: ServerMessageType.StateUpdate,
@@ -676,6 +682,22 @@ const init = () => {
         gameState,
       },
     } as ServerMessage<StateUpdateData>);
+  };
+
+  const chat = (ws: WebSocket, data: ClientChatData) => {
+    const gameState = games.find((game) => game.id === data.gameId);
+
+    if (!gameState) {
+      return sendError(ws, "Game not found");
+    }
+
+    broadcast(gameState, {
+      type: ServerMessageType.Chat,
+      data: {
+        playerId: data.playerId,
+        message: data.message,
+      },
+    } as ServerMessage<ServerChatData>);
   };
 
   const skipQuestion = (ws: WebSocket, skipData: SkipData) => {
@@ -785,6 +807,9 @@ const init = () => {
         }
         case ClientMessageType.Ping: {
           return pong(ws, message.data as PingData);
+        }
+        case ClientMessageType.Chat: {
+          return chat(ws, message.data as ClientChatData);
         }
         case ClientMessageType.RestartGame: {
           return restartGame(ws, message.data as RestartGameData);

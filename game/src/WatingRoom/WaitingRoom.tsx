@@ -10,6 +10,8 @@ type Props = {
   gameState: GameState;
   host: boolean;
   startGame: () => void;
+  sendChat: (message: string) => void;
+  chatMessages: { playerId: string; message: string }[];
 };
 
 const WaitingRoom = (props: Props) => {
@@ -72,10 +74,9 @@ const WaitingRoom = (props: Props) => {
   }
 
   const [copiedText, setCopiedText] = useState(false);
+  const [chat, setChat] = useState<string>("");
 
   let shareContent = <></>;
-  // checkmark emoji in a variable
-  const checkmark = "✅";
 
   // if there are less than 4 players
   if (props.gameState.players.length < 4) {
@@ -129,6 +130,28 @@ Click here to join: ${window.location.href}`);
             <>
               <div className={styles.canvasContainer} key={index}>
                 {/* <div className={styles.crown}>{player?.isHost ? crown : ""}</div> */}
+
+                {props.chatMessages
+                  .filter((message) => message.playerId === player.id)
+                  .map((message, chatIndex) => {
+                    return (
+                      <div
+                        className={`${styles.chatMessage} ${
+                          message.message.trim().endsWith("!!!")
+                            ? styles.biggest
+                            : message.message.trim().endsWith("!!")
+                            ? styles.bigger
+                            : message.message.trim().endsWith("!")
+                            ? styles.big
+                            : ""
+                        }`}
+                        key={chatIndex}
+                      >
+                        {message.message}
+                      </div>
+                    );
+                  })}
+
                 <ProfilePic
                   player={player}
                   width={100}
@@ -142,6 +165,24 @@ Click here to join: ${window.location.href}`);
           );
         })}
       </div>
+      <input
+        value={chat}
+        onChange={(e) => {
+          // if message longer than 30 characters, don't update
+          if (e.target.value.length > 30) return;
+
+          setChat(e.target.value);
+        }}
+        placeholder="Chat..."
+        autoFocus
+        className={styles.chatInput}
+        onKeyPress={(e) => {
+          if (e.key === "Enter") {
+            props.sendChat(chat);
+            setChat("");
+          }
+        }}
+      />
     </div>
   );
 };

@@ -75,15 +75,19 @@ export const PlayerBox = (props: Props) => {
             width: `${percentageDone}%`,
           }}
         />
-        {props.scoreUpdates?.map((result, i) => {
-          if (result.player.id !== props.player.id) return null;
+        {props.scoreUpdates
+          ?.filter((result) => result.player.id === props.player.id)
+          .map((result, i, arr) => {
+            // if (result.player.id !== props.player.id) return null;
 
-          // if i isn't the last element
-          if (props.scoreUpdates && i !== props.scoreUpdates.length - 1) {
-            return null;
-          }
-          return <ScoreUpdate key={i} update={result} />;
-        })}
+            // only return if it's this player's last score update
+
+            // if i isn't the last element
+            if (props.scoreUpdates && i !== arr.length - 1) {
+              return null;
+            }
+            return <ScoreUpdate key={i} update={result} />;
+          })}
         <div
           className={`${styles.playerName} ${hideText ? styles.hideText : ""}`}
         >

@@ -68,6 +68,10 @@ const Round = (props: Props) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const myPlayer = props.gameState.players.find(
+    (player) => player.id === props.me
+  );
+
   useEffect(() => {
     console.log("showing num hints");
     if (scrollRef.current) {
@@ -76,7 +80,7 @@ const Round = (props: Props) => {
         behavior: "smooth",
       });
     }
-  }, [props.gameState.showingNumHints]);
+  }, [myPlayer?.showingNumHints]);
 
   const [fadeOut, setFadeOut] = useState(false);
 
@@ -106,10 +110,6 @@ const Round = (props: Props) => {
       clearTimeout(fadeTimeoutRef.current!);
     }
   }, [props.roundOver]);
-
-  const myPlayer = props.gameState.players.find(
-    (player) => player.id === props.me
-  );
 
   const wholeBarDisabled = myPlayer?.skipped || props.roundOver;
 
@@ -207,7 +207,7 @@ const Round = (props: Props) => {
               <span className={styles.right}></span>
             </div>
             {questions.map((question, i) => {
-              if (i >= props.gameState.showingNumHints) return null;
+              if (i >= (myPlayer?.showingNumHints || 0)) return null;
 
               return (
                 <Sentence
@@ -265,7 +265,7 @@ const Round = (props: Props) => {
             }}
             disabled={
               wholeBarDisabled ||
-              props.gameState.showingNumHints >= questions.length
+              (myPlayer && myPlayer.showingNumHints >= questions.length)
             }
           >
             Hint
@@ -289,7 +289,7 @@ const Round = (props: Props) => {
             }}
             disabled={
               wholeBarDisabled ||
-              props.gameState.showingNumHints >= questions.length
+              (myPlayer && myPlayer.showingNumHints >= questions.length)
             }
           >
             Hint
