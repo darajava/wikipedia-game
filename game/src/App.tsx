@@ -161,7 +161,7 @@ function App() {
   };
 
   const joinGame = function (gameId: string) {
-    // console.log("join game", clientRef.current);
+    console.log("join game", clientRef.current);
     // log calling function
     if (!clientRef.current) {
       return;
@@ -227,7 +227,7 @@ function App() {
       } as ClientMessage<StartGameData>);
     }
 
-    navigate("/", { replace: true });
+    navigate("/");
     setGameState(undefined);
   };
 
@@ -359,11 +359,14 @@ function App() {
 
   useEffect(() => {
     if (createdGameId) {
-      navigate(`/${createdGameId}`, { replace: true });
+      navigate(`/${createdGameId}`);
     }
   }, [createdGameId]);
 
   useEffect(() => {
+    if (!hasClicked) {
+      return;
+    }
     const client = new W3CWebSocket(
       // @ts-ignore
       process.env.REACT_APP_WS_URL,
@@ -495,7 +498,7 @@ function App() {
           case ServerMessageType.Error:
             const errorData = message.data as ErrorData;
 
-            navigate("/", { replace: true });
+            navigate("/");
 
             setErrors((errors) => [...errors, errorData.message]);
             break;
@@ -506,7 +509,7 @@ function App() {
         }
       }
     };
-  }, []);
+  }, [hasClicked]);
 
   // <input
   //       value={name}
@@ -522,7 +525,26 @@ function App() {
   const [content, setContent] = useState<JSX.Element | null>(null);
 
   useEffect(() => {
-    if (!gameState) {
+    if (!hasClicked) {
+      setContent(
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <Button
+            onClick={() => {
+              setHasClicked(true);
+            }}
+          >
+            Tap to start
+          </Button>
+        </div>
+      );
+    } else if (!gameState) {
       setContent(
         <Routes>
           <Route
@@ -531,7 +553,7 @@ function App() {
               <Intro
                 joinGame={joinGame}
                 createGame={() => {
-                  navigate("/create-game", { replace: true });
+                  navigate("/create-game");
                 }}
                 ws={clientRef.current}
               />
@@ -543,7 +565,7 @@ function App() {
               <Intro
                 joinGame={joinGame}
                 createGame={() => {
-                  navigate("/create-game", { replace: true });
+                  navigate("/create-game");
                 }}
                 ws={clientRef.current}
               />
@@ -617,28 +639,8 @@ function App() {
     chatMessages,
     allowMistakes,
     difficulties,
+    hasClicked,
   ]);
-
-  if (!hasClicked) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <Button
-          onClick={() => {
-            setHasClicked(true);
-          }}
-        >
-          Tap to start
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <>

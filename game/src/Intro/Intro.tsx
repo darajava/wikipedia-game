@@ -32,32 +32,6 @@ const Intro = (props: Props) => {
   const [gameId, setGameId] = useState(params.gameId || "");
   let navigate = useNavigate();
 
-  useEffect(() => {
-    if (hasAttemptedJoin) {
-      return;
-    }
-
-    if (props.ws && props.ws.readyState === props.ws.OPEN && params.gameId) {
-      if (nameComplete) {
-        props.joinGame(params.gameId);
-        setHasAttemptedJoin(true);
-      } else {
-        setContent(
-          <EnterName
-            setNameComplete={() => {
-              setNameComplete(true);
-            }}
-            cancel={() => {
-              navigate("/");
-              setGameId("");
-            }}
-          />
-        );
-      }
-      console.log("params", params.gameId);
-    }
-  }, [props.ws, nameComplete, hasAttemptedJoin]);
-
   const [content, setContent] = useState<JSX.Element>();
   const [rerender, setRerender] = useState(0);
 
@@ -123,7 +97,40 @@ const Intro = (props: Props) => {
         </>
       );
     }
-  }, [showJoinGame, nameComplete, gameId, rerender]);
+
+    if (hasAttemptedJoin) {
+      return;
+    }
+
+    if (props.ws && props.ws.readyState === props.ws.OPEN && params.gameId) {
+      if (nameComplete) {
+        console.log(" I am here");
+        props.joinGame(params.gameId);
+        setHasAttemptedJoin(true);
+      } else {
+        setContent(
+          <EnterName
+            setNameComplete={() => {
+              setNameComplete(true);
+            }}
+            cancel={() => {
+              navigate("/");
+              setGameId("");
+            }}
+          />
+        );
+      }
+      console.log("params", params.gameId);
+    }
+  }, [
+    props.ws,
+    nameComplete,
+    hasAttemptedJoin,
+    showJoinGame,
+    nameComplete,
+    gameId,
+    rerender,
+  ]);
 
   return <div className={styles.intro}>{content}</div>;
 };
