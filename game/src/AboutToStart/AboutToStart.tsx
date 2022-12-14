@@ -32,6 +32,7 @@ export const AboutToStart = () => {
   return (
     <div className={styles.aboutToStart}>
       <h1 className={styles.getReady}>Get ready to play!</h1>
+      <h2 className={styles.getReady}>First to 50 points</h2>
       <div className={styles.countdown}>
         <div
           className={styles.countdownNumber}

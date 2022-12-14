@@ -3,6 +3,8 @@ import { AppDataSource } from "../data-source";
 
 import { Question as QuestionEntity } from "../entity/Question";
 
+import pluralize from "pluralize";
+
 import {
   ServerMessageType,
   ClientMessageType,
@@ -471,6 +473,7 @@ const init = () => {
       questionsAnswered: -1,
       timeLeftInMs: undefined,
       stateOfPlay: "lobby",
+      allowMistakes: data.allowMistakes,
     };
 
     clients.set(playerId, ws);
@@ -489,6 +492,49 @@ const init = () => {
         host: true,
       },
     } as ServerMessage<YouAreData>);
+  };
+
+  // returns 0 if the guess is correct, 1 if it's within 2 edits, 2 if it's not
+  const scoreGuess = (
+    gameState: GameState,
+    player: Player,
+    guess: string,
+    possibleAnswers: string[]
+  ) => {
+    guess = guess
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/gi, "");
+
+    let distance = 0;
+    if (possibleAnswers.includes(guess)) {
+      distance = 0;
+    } else {
+      distance = 2;
+
+      // if any of the possible answers are within 2 edits of the guess, give them a point
+      if (!gameState.cameClose) {
+        for (const possibleAnswer of possibleAnswers) {
+          if (levenshtein(possibleAnswer.toLowerCase(), guess) <= 2) {
+            if (gameState.allowMistakes) {
+              distance = 0;
+              break;
+            }
+            distance = 1;
+            gameState.cameClose = true;
+            break;
+          }
+        }
+      }
+    }
+
+    // if (reason === ScoreReasons.Correct) {
+    //   console.log("correct answer");
+    //   nextRound(gameState);
+    // }
+    // updateScore(gameState, player, reason, guess);
+
+    return distance;
   };
 
   const answerQuestion = (ws: WebSocket, data: GuessData) => {
@@ -520,38 +566,25 @@ const init = () => {
           .replace(/[^a-z0-9]/g, "");
       });
 
-      let reason: ScoreReasons;
+      console.log("pluralising", pluralize(data.guess, 2));
 
-      const guess = data.guess
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]/gi, "");
+      const pluralGuess = pluralize(data.guess, 2);
+      const singleGuess = pluralize(data.guess, 1);
 
-      console.log("guess", guess);
-      console.log("possible answers", possibleAnswers);
+      const bestScore = Math.min(
+        scoreGuess(gameState, player, pluralGuess, possibleAnswers),
+        scoreGuess(gameState, player, singleGuess, possibleAnswers)
+      );
 
-      if (possibleAnswers.includes(guess)) {
-        reason = ScoreReasons.Correct;
+      if (bestScore === 0) {
+        updateScore(gameState, player, ScoreReasons.Correct, data.guess);
+        // if game not over
+        if (gameState.currentQuestion) nextRound(gameState);
+      } else if (bestScore === 1) {
+        updateScore(gameState, player, ScoreReasons.Close, data.guess);
       } else {
-        reason = ScoreReasons.Incorrect;
-
-        // if any of the possible answers are within 2 edits of the guess, give them a point
-        if (!gameState.cameClose) {
-          for (const possibleAnswer of possibleAnswers) {
-            if (levenshtein(possibleAnswer.toLowerCase(), guess) <= 2) {
-              reason = ScoreReasons.Close;
-              gameState.cameClose = true;
-              break;
-            }
-          }
-        }
+        updateScore(gameState, player, ScoreReasons.Incorrect, data.guess);
       }
-
-      if (reason === ScoreReasons.Correct) {
-        console.log("correct answer");
-        nextRound(gameState);
-      }
-      updateScore(gameState, player, reason, data.guess);
     } catch (e) {
       return sendError(ws, "Invalid question");
     }

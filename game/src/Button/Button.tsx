@@ -4,7 +4,9 @@ type Props = {
   children: string;
   onClick: () => void;
   secondary?: boolean;
+  selected?: boolean;
   pulse?: boolean;
+  disabled?: boolean;
 };
 
 export const Button = (props: Props) => {
@@ -12,9 +14,12 @@ export const Button = (props: Props) => {
 
   return (
     <button
+      disabled={props.disabled}
       className={`${styles.button} ${props.secondary ? styles.secondary : ""} ${
-        props.pulse ? styles.pulse : ""
-      }`}
+        props.selected ? styles.selected : ""
+      }
+      ${props.disabled ? styles.disabled : ""}
+      ${props.pulse ? styles.pulse : ""}`}
       onClick={() => {
         if (!props.secondary) {
           // click.play();

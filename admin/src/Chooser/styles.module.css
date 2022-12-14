@@ -32,12 +32,18 @@ input {
   margin: 0.5em 0;
 }
 
+h1,
+h2 {
+  text-align: center;
+}
+
 .linksContainer {
   display: flex;
   width: 400px;
   text-align: center;
   flex-flow: wrap;
   justify-content: center;
+  max-width: 100%;
 }
 .link {
   margin: 0 0.5em;
@@ -50,6 +56,10 @@ input {
 
 .buttonHolder {
   /* margin: 50px 0; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
 }
 
 .addedBy {
@@ -60,11 +70,13 @@ input {
 
 .answerContainer {
   margin-bottom: 50px;
+  text-align: center;
 }
 
 .questionContainer {
-  width: 800px;
+  max-width: 800px;
   text-align: center;
+  padding: 20px;
   display: flex;
   flex-direction: column;
 }
@@ -75,6 +87,7 @@ input {
   margin-bottom: 15px;
   padding-bottom: 15px;
   border-bottom: 1px solid #e5e5e5;
+  max-width: 100%;
 }
 
 .question:last-child {

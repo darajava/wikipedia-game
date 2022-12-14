@@ -370,6 +370,20 @@ function print(text: string) {
   console.log(text.slice(0, 700));
 }
 
+// replace all acronyms like U.S.A. with U@@@S@@@A@@@
+const replaceAcronyms = (text: string) => {
+  const regex = /([A-Z0-9]+\.[^ ])+/gi;
+  const matches = text.match(regex);
+
+  if (matches) {
+    for (let i = 0; i < matches.length; i++) {
+      text = text.replace(matches[i], matches[i].replace(/\./g, "@@@"));
+    }
+  }
+
+  return text;
+};
+
 router.get("/article-info/:name", async (req, res) => {
   // get contents of a wikipedia article
   fetch(
@@ -433,9 +447,21 @@ router.get("/article-info/:name", async (req, res) => {
       content = replaceLinks(content);
       print(content);
 
+      // replace all acronyms like U.S.A. with U@@@S@@@A@@@
+      content = replaceAcronyms(content);
+
       // get first sentence
       const regex5 = / ?[^.!?]+[.!?]+ */g;
       const sentences = content.match(regex5);
+
+      // revert acronyms
+      content = content.replace(/@@@/g, ".");
+      // revert acronyms in sentences
+      if (sentences) {
+        for (let i = 0; i < sentences.length; i++) {
+          sentences[i] = sentences[i].replace(/@@@/g, ".");
+        }
+      }
 
       if (!sentences) {
         res.status(404).json({ error: "Article not found" });

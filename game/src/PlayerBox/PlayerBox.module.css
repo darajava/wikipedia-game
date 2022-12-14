@@ -163,9 +163,9 @@
   .playerScoreMobile {
     font-size: 1.4em;
     font-weight: 700;
-    margin-left: 10px;
     font-size: 24px;
     color: var(--black);
+    display: initial;
     /* font-family: "Open Sans", sans-serif; */
     /* position: relative; */
   }

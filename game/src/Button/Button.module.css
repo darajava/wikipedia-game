@@ -1,5 +1,4 @@
 .button {
-  flex: 1;
   box-sizing: border-box;
   padding: 14px;
   font-size: 20px;
@@ -8,20 +7,16 @@
   background-color: var(--primary-very-muted);
   /* color: varwhite; */
   border: 0;
-  font-weight: bold;
   cursor: pointer;
   border: 1px solid var(--primary);
   color: var(--primary);
+  transition: all 0.2s;
 }
 
-.button:hover {
+.selected {
   background-color: var(--primary);
   color: var(--white);
-}
-
-.button:active {
-  background-color: var(--primary-muted);
-  color: var(--white);
+  font-weight: bold;
 }
 
 .secondary {
@@ -30,6 +25,13 @@
   opacity: 0.5;
   font-size: 16px;
   border: 0;
+}
+
+.disabled {
+  background-color: var(--primary-very-muted);
+  color: var(--primary);
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .pulse {

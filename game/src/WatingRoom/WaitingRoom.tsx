@@ -87,7 +87,7 @@ const WaitingRoom = (props: Props) => {
         players:
         <div
           className={styles.shareInput}
-          onClick={() => {
+          onMouseDown={() => {
             // get my name
             const myName = props.gameState.players.find(
               (player) => player.id === playerId
@@ -119,6 +119,17 @@ Click here to join: ${window.location.href}`);
     <div className={styles.waitingRoom}>
       <h1>Lobby</h1>
       <div className={styles.bottomContent}>{topContent}</div>
+      <div className={styles.gameInfo}>
+        <div className={styles.difficulties}>
+          Difficulties: <b>{props.gameState.difficulties.join(", ")}</b>
+        </div>
+
+        <div className={styles.allowMistakes}>
+          {props.gameState.allowMistakes
+            ? "Allowing slight misspellings"
+            : "Misspellings are not allowed"}
+        </div>
+      </div>
       {shareContent}
 
       <div className={styles.playersHolder}>

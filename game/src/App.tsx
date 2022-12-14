@@ -36,6 +36,7 @@ import {
   RestartGameData,
   ClientChatData,
   ServerChatData,
+  Difficulties,
 } from "types";
 import Errors from "./Errors/Errors";
 import { Route, Router, Routes, useNavigate } from "react-router-dom";
@@ -48,6 +49,8 @@ import { INTERMISSION_TIME } from "types/build/constants";
 import useLocalStorage from "./hooks/useLocalStorage";
 import { GameOver } from "./GameOver/GameOver";
 import { AboutToStart } from "./AboutToStart/AboutToStart";
+import { CreateGame } from "./CreateGame/CreateGame";
+import { Button } from "./Button/Button";
 
 function App() {
   const [gameState, setGameState] = useState<GameState>();
@@ -76,6 +79,8 @@ function App() {
 
     clientRef.current.send(JSON.stringify(data));
   };
+
+  const [hasClicked, setHasClicked] = useState(false);
 
   useEffect(() => {
     console.log("Name changed", name);
@@ -125,6 +130,12 @@ function App() {
     setGuess("");
   };
 
+  const [difficulties, setDifficulties] = useState<Difficulties[]>([
+    "Easy",
+    "Medium",
+  ]);
+  const [allowMistakes, setAllowMistakes] = useState(true);
+
   const createGame = () => {
     console.log("create game", clientRef.current);
 
@@ -134,9 +145,9 @@ function App() {
       sendData({
         type: ClientMessageType.CreateGame,
         data: {
-          amount: 5,
           name: nameRef.current,
-          difficulties: ["Easy", "Medium", "Hard"],
+          difficulties,
+          allowMistakes,
           canvasData: canvasDataRef.current,
         },
       } as ClientMessage<CreateGameData>);
@@ -344,6 +355,14 @@ function App() {
     }
   }, [gameState]);
 
+  const [createdGameId, setCreatedGameId] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (createdGameId) {
+      navigate(`/${createdGameId}`, { replace: true });
+    }
+  }, [createdGameId]);
+
   useEffect(() => {
     const client = new W3CWebSocket(
       // @ts-ignore
@@ -389,7 +408,7 @@ function App() {
             const createdGameData = message.data as CreatedGameData;
             console.log("Created Game", createdGameData);
 
-            navigate("/" + createdGameData.gameState.id, { replace: true });
+            setCreatedGameId(createdGameData.gameState.id);
 
             break;
           case ServerMessageType.JoinedGame:
@@ -511,7 +530,9 @@ function App() {
             element={
               <Intro
                 joinGame={joinGame}
-                createGame={createGame}
+                createGame={() => {
+                  navigate("/create-game", { replace: true });
+                }}
                 ws={clientRef.current}
               />
             }
@@ -521,8 +542,21 @@ function App() {
             element={
               <Intro
                 joinGame={joinGame}
-                createGame={createGame}
+                createGame={() => {
+                  navigate("/create-game", { replace: true });
+                }}
                 ws={clientRef.current}
+              />
+            }
+          />
+          <Route
+            path="/create-game"
+            element={
+              <CreateGame
+                setAllowMistakes={setAllowMistakes}
+                setDifficulties={setDifficulties}
+                createGame={createGame}
+                allowMistakes={allowMistakes}
               />
             }
           />
@@ -581,7 +615,30 @@ function App() {
     savedCanvases,
     playerId,
     chatMessages,
+    allowMistakes,
+    difficulties,
   ]);
+
+  if (!hasClicked) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Button
+          onClick={() => {
+            setHasClicked(true);
+          }}
+        >
+          Tap to start
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <>

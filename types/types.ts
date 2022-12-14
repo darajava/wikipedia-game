@@ -30,6 +30,7 @@ export type GameState = {
   timeLeftInMs: number;
   cameClose?: boolean;
   stateOfPlay: StateOfPlay;
+  allowMistakes: boolean;
 };
 
 export type Question = {
@@ -93,6 +94,7 @@ export type CreateGameData = {
   name: string;
   canvasData: string;
   difficulties: Difficulties[];
+  allowMistakes: boolean;
 };
 
 export type StartGameData = {

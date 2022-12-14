@@ -204,10 +204,10 @@ input:disabled {
   .guessInput {
     width: inherit;
   }
-  .left,
+  /* .left,
   .right {
     display: none;
-  }
+  } */
   /* .playersContainerMobile {
     display: flex;
     flex-direction: row;

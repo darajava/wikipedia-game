@@ -21,6 +21,7 @@ export const GameOver = (props: Props) => {
   const [playerId] = useLocalStorage<string>("playerId", "");
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
     // if my score is the highest, explode
     if (orderedPlayers[0].id === playerId) {
       clap.play();
@@ -32,12 +33,21 @@ export const GameOver = (props: Props) => {
 
         // after 5 seconds, fade out clap
         setTimeout(() => {
-          setInterval(() => {
-            clap.volume -= 0.1;
+          interval = setInterval(() => {
+            if (clap.volume > 0) {
+              clap.volume -= 0.1;
+            } else {
+              clap.volume = 0;
+              clearInterval(interval);
+            }
           }, 100);
         }, 5000);
       }, 700);
     }
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   const clap = new Audio("/sound/win.mp3");
